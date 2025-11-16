@@ -1,3 +1,5 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,19 +10,21 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { getAvatar } from "@/lib/getAvatar";
+import { orpc } from "@/lib/orpc";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs";
 import { PortalLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { CreditCard, LogOutIcon, UserIcon } from "lucide-react";
 
-// fake user temp
-const USER = {
-  picture: "https://github.com/shadcn.png",
-  given_name: "User Name",
-  email: "test@example.com",
-};
-
 export function UserNav() {
+  const { data, isError } = useSuspenseQuery(orpc.workspace.list.queryOptions());
+
+  if (isError) {
+    return <div>Error loading user data</div>;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -30,8 +34,12 @@ export function UserNav() {
           className="size-12 rounded-xl hover:rounded-lg transition-all duration-200 bg-background/50 border-border/50 hover:bg-accent hover:text-accent-foreground"
         >
           <Avatar>
-            <AvatarImage src={USER.picture} alt="User Avatar" className="object-cover" />
-            <AvatarFallback className="uppercase">{USER.given_name.slice(0, 2)}</AvatarFallback>
+            <AvatarImage
+              src={getAvatar({ picture: data.user.picture, email: data.user.email })}
+              alt="User Avatar"
+              className="object-cover"
+            />
+            <AvatarFallback className="uppercase">{data.user.given_name?.slice(0, 2) || ""}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -39,13 +47,17 @@ export function UserNav() {
       <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-52">
         <DropdownMenuLabel className="flex items-center gap-3">
           <Avatar className="size-8 rounded-lg">
-            <AvatarImage src={USER.picture} alt="User Avatar" className="object-cover" />
-            <AvatarFallback className="uppercase">{USER.given_name.slice(0, 2)}</AvatarFallback>
+            <AvatarImage
+              src={getAvatar({ picture: data.user.picture, email: data.user.email })}
+              alt="User Avatar"
+              className="object-cover"
+            />
+            <AvatarFallback className="uppercase">{data.user.given_name?.slice(0, 2) || ""}</AvatarFallback>
           </Avatar>
 
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <p className="truncate font-medium">{USER.given_name}</p>
-            <p className="text-xs truncate text-muted-foreground">{USER.email}</p>
+            <p className="truncate font-medium">{data.user.given_name}</p>
+            <p className="text-xs truncate text-muted-foreground">{data.user.email}</p>
           </div>
         </DropdownMenuLabel>
 

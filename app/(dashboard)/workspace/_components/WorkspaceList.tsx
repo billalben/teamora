@@ -1,14 +1,14 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
+import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function WorkspaceList() {
-  // static for now
-  const workspaces = [
-    { id: "1", name: "Org 1", avatar: "O1" },
-    { id: "2", name: "Org 2", avatar: "O2" },
-    { id: "3", name: "Org 3", avatar: "O3" },
-  ];
+  const { data, isError } = useSuspenseQuery(orpc.workspace.list.queryOptions());
 
   const colorCominations = [
     "bg-blue-500 hover:bg-blue-600 text-white",
@@ -25,25 +25,53 @@ export function WorkspaceList() {
     return colorCominations[charSum % colorCominations.length];
   };
 
+  if (isError) {
+    return <div>Error loading workspaces</div>;
+  }
+
+  const renderWorkspaceIcon = (
+    workspace: { id: string; name: string; avatar?: string | undefined },
+    isActive: boolean
+  ) => {
+    return (
+      <Button
+        size="icon"
+        className={cn(
+          "size-12 transition-all duration-200",
+          getWorkspaceColor(workspace.id),
+          isActive && "border-2 border-white/70 hover:border-white hover:rounded-lg"
+        )}
+      >
+        <span className="text-sm font-semibold">{workspace.avatar}</span>
+      </Button>
+    );
+  };
+
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-2">
-        {workspaces.map((workspace) => (
-          <Tooltip key={workspace.id}>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                className={cn("size-12 transition-all duration-200", getWorkspaceColor(workspace.id))}
-              >
-                <span className="text-sm font-semibold">{workspace.avatar}</span>
-              </Button>
-            </TooltipTrigger>
+        {data.workspaces.map((workspace) => {
+          const isActive = data.currentWorkspace.orgCode === workspace.id;
 
-            <TooltipContent side="right">
-              <p>{workspace.name}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
+          return (
+            <Tooltip key={workspace.id}>
+              <TooltipTrigger asChild>
+                {/* disabled to login again if we are already in this workspace */}
+                {isActive ? (
+                  renderWorkspaceIcon(workspace, isActive)
+                ) : (
+                  <LoginLink orgCode={workspace.id}>{renderWorkspaceIcon(workspace, isActive)}</LoginLink>
+                )}
+              </TooltipTrigger>
+
+              <TooltipContent side="right">
+                <p>
+                  {workspace.name} {isActive && "(Current)"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
       </div>
     </TooltipProvider>
   );

@@ -1,9 +1,13 @@
+import "@/lib/orpc.server"; // for pre-rendering
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/lib/theme-provider";
 import { AuthProvider } from "@/components/ui/AuthProvider";
+import { Providers } from "@/lib/providers";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +33,10 @@ export default function RootLayout({
     <AuthProvider>
       <html lang="en" suppressHydrationWarning>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange></ThemeProvider>
-          {children}
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <Providers>{children}</Providers>
+            <Toaster closeButton position="top-center" />
+          </ThemeProvider>
         </body>
       </html>
     </AuthProvider>
