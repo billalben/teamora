@@ -24,6 +24,7 @@ import { workspaceSchema, type WorkspaceSchemaType } from "@/app/schemas/workspa
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
+import { isDefinedError } from "@orpc/client";
 
 export function CreateWorkspace() {
   const [openDialog, setDialogOpen] = React.useState(false);
@@ -46,7 +47,19 @@ export function CreateWorkspace() {
         setDialogOpen(false);
       },
       onError: (error) => {
-        toast.error(`Failed to create workspace: ${error.message}`);
+        if (isDefinedError(error)) {
+          if (error.code === "RATE_LIMITER") {
+            toast.error("Rate limit exceeded. Please try again later.");
+          } else if (error.code === "FORBIDDEN") {
+            toast.error("You do not have permission to create a workspace.");
+          } else {
+            toast.error(error.message);
+          }
+
+          return;
+        }
+
+        toast.error("Failed to create workspace due to an unexpected error.");
       },
     })
   );
