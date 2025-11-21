@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import { PortalLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { CreditCard, LogOutIcon, UserIcon } from "lucide-react";
+import Image from "next/image";
 
 export function UserNav() {
   const { data, isError } = useSuspenseQuery(orpc.workspace.list.queryOptions());
@@ -34,11 +35,13 @@ export function UserNav() {
           className="size-12 rounded-xl hover:rounded-lg transition-all duration-200 bg-background/50 border-border/50 hover:bg-accent hover:text-accent-foreground"
         >
           <Avatar>
-            <AvatarImage
+            <Image
               src={getAvatar({ picture: data.user.picture, email: data.user.email })}
               alt="User Avatar"
+              fill
               className="object-cover"
             />
+            src={}
             <AvatarFallback className="uppercase">{data.user.given_name?.slice(0, 2) || ""}</AvatarFallback>
           </Avatar>
         </Button>
@@ -47,9 +50,10 @@ export function UserNav() {
       <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-52">
         <DropdownMenuLabel className="flex items-center gap-3">
           <Avatar className="size-8 rounded-lg">
-            <AvatarImage
+            <Image
               src={getAvatar({ picture: data.user.picture, email: data.user.email })}
               alt="User Avatar"
+              fill
               className="object-cover"
             />
             <AvatarFallback className="uppercase">{data.user.given_name?.slice(0, 2) || ""}</AvatarFallback>

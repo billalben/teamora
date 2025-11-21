@@ -16,21 +16,59 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { orpc } from "@/lib/orpc";
+import { toast } from "sonner";
+import { isDefinedError } from "@orpc/client";
 
 export function CreateNewChannel() {
+  const queryClient = useQueryClient();
+
   const [openDialog, setOpenDialog] = useState(false);
+
   const form = useForm<ChannelNameSchemaType>({
     resolver: zodResolver(channelNameSchema),
     defaultValues: { name: "" },
   });
 
+  const createChannelMutation = useMutation(
+    orpc.channel.create.mutationOptions({
+      onSuccess: (newChannel) => {
+        toast.success(`Channel ${newChannel.name} created successfully`);
+
+        queryClient.invalidateQueries({
+          queryKey: orpc.channel.list.queryKey(),
+        });
+
+        form.reset();
+        setOpenDialog(false);
+      },
+      onError: (error) => {
+        if (isDefinedError(error)) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to create channel due to an unexpected error.");
+        }
+        setOpenDialog(false);
+      },
+    })
+  );
+
+  const handleModalChange = (isOpen: boolean) => {
+    if (!isOpen && createChannelMutation.isPending) {
+      // Prevent closing the dialog while mutation is in progress
+      return;
+    }
+
+    setOpenDialog(isOpen);
+  };
+
   const onSubmit = (values: ChannelNameSchemaType) => {
-    console.log("values", values);
-    setOpenDialog(false);
+    createChannelMutation.mutate(values);
   };
 
   return (
-    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+    <Dialog open={openDialog} onOpenChange={handleModalChange}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
           <PlusIcon className="size-4" />
@@ -60,6 +98,7 @@ export function CreateNewChannel() {
                       aria-invalid={fieldState.invalid}
                       placeholder="My New Channel"
                       autoComplete="off"
+                      disabled={createChannelMutation.isPending}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     {transformedName && transformedName !== field.value && (
@@ -75,11 +114,16 @@ export function CreateNewChannel() {
         </form>
         <DialogFooter>
           <Field orientation="horizontal" className="justify-end">
-            <Button type="button" variant="outline" onClick={() => setOpenDialog(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleModalChange(false)}
+              disabled={createChannelMutation.isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit" form="form-create-channel">
-              Create Channel
+            <Button type="submit" form="form-create-channel" disabled={createChannelMutation.isPending}>
+              {createChannelMutation.isPending ? "Creating..." : "Create Channel"}
             </Button>
           </Field>
         </DialogFooter>
