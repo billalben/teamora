@@ -23,5 +23,27 @@ model Channel {
   workspaceId String // Kinde org id
   createdById String // Kinde user id
 
+  messages  Message[]
+
   @@unique([workspaceId, name])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  imageUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign keys
+  authorId  String // Kinde user id
+  authorEmail String
+  authorName  String
+  authorAvatarUrl String?
+
+  channelId String?
+  channel   Channel?  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId])
 }

@@ -74,7 +74,6 @@ export function CreateWorkspace() {
   };
 
   const onSubmit = (data: WorkspaceSchemaType) => {
-    console.log("Form submitted:", data);
     createWorkspaceMutation.mutate(data);
   };
 
