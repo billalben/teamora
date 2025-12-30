@@ -33,7 +33,6 @@ export function MessageInputForm({ channelId }: IAppProps) {
 
   const onSubmit = (data: CreateMessageSchemaType) => {
     console.log("data submitted: ", data);
-
     createMessageMutation.mutate(data);
   };
 
@@ -48,7 +47,8 @@ export function MessageInputForm({ channelId }: IAppProps) {
               <MessageComposer
                 value={field.value}
                 onChange={field.onChange}
-                isLoading={createMessageMutation.isPending}
+                onSubmit={form.handleSubmit(onSubmit)}
+                isSubmitting={createMessageMutation.isPending}
               />
               {fieldState.error && <div className="text-xs text-destructive mt-1">{fieldState.error.message}</div>}
             </Field>
