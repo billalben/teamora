@@ -5,6 +5,8 @@ import { MessageItem } from "./message/MessageItem";
 import { orpc } from "@/lib/orpc";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { MessageCircleOffIcon } from "lucide-react";
 
 export function MessagesList() {
   const params = useParams<{ channelId: string }>();
@@ -77,11 +79,24 @@ export function MessagesList() {
         </div>
       )}
 
-      <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto px-4">
-        {items?.map((message) => (
-          <MessageItem key={message.id} message={message} />
-        ))}
-      </div>
+      {/* check if there is data to show the message or empty ui */}
+      {items.length === 0 ? (
+        <Empty className="h-full">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MessageCircleOffIcon className="size-16 text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyTitle>No messages yet.</EmptyTitle>
+            <EmptyDescription>Send a message to get things started.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto px-4">
+          {items?.map((message) => (
+            <MessageItem key={message.id} message={message} />
+          ))}
+        </div>
+      )}
 
       {/* TODO: new messages button to scroll bottom */}
     </div>
