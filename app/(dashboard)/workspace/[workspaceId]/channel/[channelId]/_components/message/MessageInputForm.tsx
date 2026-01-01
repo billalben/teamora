@@ -5,24 +5,36 @@ import { Field, FieldGroup } from "@/components/ui/field";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { MessageComposer } from "./MessageComposer";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
+import { useState } from "react";
 
 interface IAppProps {
   channelId: string;
 }
 
 export function MessageInputForm({ channelId }: IAppProps) {
+  const [editorKey, setEditorKey] = useState(0);
+
   const form = useForm<CreateMessageSchemaType>({
     resolver: zodResolver(createMessageSchema),
     defaultValues: { channelId, content: "" },
   });
 
+  // React Query
+  const queryClient = useQueryClient();
+
   const createMessageMutation = useMutation(
     orpc.message.create.mutationOptions({
       onSuccess: () => {
-        form.reset({ content: "", channelId });
+        form.reset();
+        setEditorKey((prev) => prev + 1);
+
+        queryClient.invalidateQueries({
+          queryKey: orpc.message.list.key(),
+        });
+
         return toast.success("Message sent successfully!");
       },
       onError: () => {
@@ -32,7 +44,7 @@ export function MessageInputForm({ channelId }: IAppProps) {
   );
 
   const onSubmit = (data: CreateMessageSchemaType) => {
-    console.log("data submitted: ", data);
+    // console.log("data submitted: ", data);
     createMessageMutation.mutate(data);
   };
 
@@ -49,6 +61,7 @@ export function MessageInputForm({ channelId }: IAppProps) {
                 onChange={field.onChange}
                 onSubmit={form.handleSubmit(onSubmit)}
                 isSubmitting={createMessageMutation.isPending}
+                editorKey={editorKey}
               />
               {fieldState.error && <div className="text-xs text-destructive mt-1">{fieldState.error.message}</div>}
             </Field>

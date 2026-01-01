@@ -10,34 +10,40 @@ interface IAppProps {
   field: any;
   sendButton: ReactNode;
   footerLeft?: ReactNode;
+  editorKey?: number;
 }
 
-export function RichTextEditor({ field, sendButton, footerLeft }: IAppProps) {
-  const editor = useEditor({
-    extensions: editorExtensions,
-    content: (() => {
-      if (!field?.value) return "";
+export function RichTextEditor({ field, sendButton, footerLeft, editorKey }: IAppProps) {
+  const editor = useEditor(
+    {
+      extensions: editorExtensions,
+      content: (() => {
+        if (!field?.value) return "";
 
-      try {
-        return JSON.parse(field.value);
-      } catch {
-        return "";
-      }
-    })(),
-    onUpdate: ({ editor }) => {
-      if (field?.onChange) {
-        field.onChange(JSON.stringify(editor.getJSON()));
-      }
-    },
-    // Don't render immediately on the server to avoid SSR issues
-    immediatelyRender: false,
-    editorProps: {
-      attributes: {
-        class:
-          "prose prose-sm sm:prose lg:prose-lg p-3 focus:outline-none dark:prose-invert max-w-none marker:text-primary",
+        try {
+          return JSON.parse(field.value);
+        } catch {
+          return "";
+        }
+      })(),
+      onUpdate: ({ editor }) => {
+        if (field?.onChange) {
+          field.onChange(JSON.stringify(editor.getJSON()));
+        }
+      },
+      // Don't render immediately on the server to avoid SSR issues
+      immediatelyRender: false,
+      editorProps: {
+        attributes: {
+          class:
+            "prose prose-sm sm:prose lg:prose-lg p-3 focus:outline-none dark:prose-invert max-w-none marker:text-primary",
+        },
       },
     },
-  });
+    [editorKey]
+  );
+
+  console.log("Editor component rerendered");
 
   return (
     <div className="relative w-full border border-input rounded-lg overflow-hidden dark:bg-input/30 flex flex-col">

@@ -7,13 +7,15 @@ interface IAppProps {
   onChange: (value: string) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  editorKey?: number;
 }
 
-export function MessageComposer({ value, onChange, onSubmit, isSubmitting }: IAppProps) {
+export function MessageComposer({ value, onChange, onSubmit, isSubmitting, editorKey }: IAppProps) {
   return (
     <>
       <RichTextEditor
         field={{ value, onChange }}
+        editorKey={editorKey}
         sendButton={
           <Button type="button" size="sm" onClick={onSubmit} disabled={isSubmitting}>
             <SendIcon className="size-4 mr-1" />
