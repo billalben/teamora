@@ -70,9 +70,16 @@ export const listMessages = base
   .input(
     z.object({
       channelId: z.string(),
+      limit: z.number().min(1).max(50).optional().default(25),
+      cursor: z.string().optional(),
     })
   )
-  .output(z.array(z.custom<Message>()))
+  .output(
+    z.object({
+      items: z.array(z.custom<Message>()),
+      nextCursor: z.string().nullable(),
+    })
+  )
   .handler(async ({ input, context, errors }) => {
     const channel = await prisma.channel.findUnique({
       where: {
@@ -85,15 +92,22 @@ export const listMessages = base
       throw errors.FORBIDDEN(); // channel not found or doesn't belong to workspace
     }
 
-    const data = await prisma.message.findMany({
+    const messages = await prisma.message.findMany({
       where: {
         channelId: input.channelId,
       },
-      orderBy: {
-        createdAt: "asc",
-      },
-      take: 50,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: input.limit + 1,
+      cursor: input.cursor ? { id: input.cursor } : undefined,
+      skip: input.cursor ? 1 : 0,
     });
 
-    return data;
+    const hasMore = messages.length > input.limit;
+    const items = hasMore ? messages.slice(0, -1) : messages;
+    const nextCursor = hasMore ? messages[messages.length - 1].id : null;
+
+    return {
+      items,
+      nextCursor,
+    };
   });

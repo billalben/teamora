@@ -43,8 +43,6 @@ export function RichTextEditor({ field, sendButton, footerLeft, editorKey }: IAp
     [editorKey]
   );
 
-  console.log("Editor component rerendered");
-
   return (
     <div className="relative w-full border border-input rounded-lg overflow-hidden dark:bg-input/30 flex flex-col">
       <MenuBar editor={editor} />

@@ -15,7 +15,7 @@ export function MessageItem({ message }: TProps) {
         alt={message.authorName ?? "unknown"}
         width={32}
         height={32}
-        className="size-8 rounded-lg"
+        className="size-8 rounded-full object-cover shrink-0"
       />
 
       <div className="flex-1 space-y-1 min-w-0">
