@@ -1,11 +1,10 @@
 import arcjet, { createMiddleware, detectBot } from "@arcjet/next";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { withAuth } from "@kinde-oss/kinde-auth-nextjs/server";
+import { NextProxy } from "next/server";
 
 export const config = {
   // matcher tells Next.js which routes to run the middleware on.
   // This runs the middleware on all routes except for static assets.
-
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
   ],
@@ -29,19 +28,29 @@ const aj = arcjet({
 });
 
 // Pass any existing middleware with the optional existingMiddleware prop
-async function existingMiddleware(req: NextRequest) {
-  const { getClaim } = getKindeServerSession();
-  const orgCode = await getClaim("org_code");
+// async function existingMiddleware(req: NextRequest) {
+//   const anyReq = req as {
+//     nextUrl: NextRequest["nextUrl"];
+//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+//     kindeAuth?: { token?: any; user?: any };
+//   };
 
-  const url = req.nextUrl;
+//   const url = req.nextUrl;
 
-  if (url.pathname.startsWith("/workspace") && !url.pathname.includes(orgCode?.value || "")) {
-    url.pathname = `/workspace/${orgCode?.value}`;
+//   const orgCode =
+//     anyReq.kindeAuth?.user?.org_code || anyReq.kindeAuth?.token?.org_code || anyReq.kindeAuth?.token?.claims?.org_code;
 
-    return Response.redirect(url);
-  }
+//   // Redirect /workspace to /workspace/{orgCode}
+//   if (url.pathname.startsWith("/workspace") && orgCode && !url.pathname.startsWith(`/workspace/${orgCode}`)) {
+//     return NextResponse.redirect(new URL(`/workspace/${orgCode}`, req.url));
+//   }
 
-  return NextResponse.next();
-}
+//   return NextResponse.next();
+// }
 
-export default createMiddleware(aj, existingMiddleware);
+export default createMiddleware(
+  aj,
+  withAuth(undefined, {
+    publicPaths: ["/"],
+  }) as NextProxy
+);

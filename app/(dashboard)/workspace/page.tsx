@@ -2,13 +2,20 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 
 const WorksspacePage = async () => {
-  const { isAuthenticated } = getKindeServerSession();
+  const { getOrganization } = getKindeServerSession();
+  const org = await getOrganization();
 
-  if (!(await isAuthenticated())) {
-    redirect("/");
+  if (org?.orgCode) {
+    redirect(`/workspace/${org.orgCode}`);
   }
 
-  return <div>workspace page</div>;
+  return null;
 };
 
 export default WorksspacePage;
+
+// const WorksspacePage = async () => {
+//   return <div></div>;
+// };
+
+// export default WorksspacePage;
