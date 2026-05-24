@@ -1,4 +1,4 @@
-export function isSvgImageSource(src: string, fileName?: string): boolean {
+function isSvgImageSource(src: string, fileName?: string): boolean {
   const candidates = [src, fileName].filter(Boolean) as string[];
 
   return candidates.some((value) => {
@@ -8,7 +8,7 @@ export function isSvgImageSource(src: string, fileName?: string): boolean {
 }
 
 /** UploadThing file URLs often omit the file extension; render them with a native img. */
-export function isUploadThingFileUrl(src: string): boolean {
+function isUploadThingFileUrl(src: string): boolean {
   try {
     return new URL(src).hostname.endsWith(".ufs.sh");
   } catch {

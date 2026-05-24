@@ -8,10 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint-staged": "lint-staged",
+    "knip": "knip",
+    "knip:md": "knip --reporter markdown > knip-report.md"
   },
   "dependencies": {
-    "@arcjet/inspect": "1.0.0-beta.15",
     "@arcjet/next": "1.0.0-beta.15",
     "@base-ui/react": "^1.5.0",
     "@hookform/resolvers": "^5.2.2",
@@ -52,6 +54,7 @@
     "react-hook-form": "^7.69.0",
     "react-resizable-panels": "^4.11.2",
     "recharts": "3.8.0",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "uploadthing": "^7.7.4",
@@ -68,22 +71,15 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "baseline-browser-mapping": "^2.9.11",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.1.1",
     "husky": "^9.1.7",
+    "knip": "^6.14.2",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
     "prisma": "^7.2.0",
     "tailwindcss": "^4.1.18",
-    "tsx": "^4.21.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,css,md}": [
-      "prettier --write",
-      "eslint --fix"
-    ]
   }
 }
