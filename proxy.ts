@@ -5,8 +5,9 @@ import { NextProxy } from "next/server";
 export const config = {
   // matcher tells Next.js which routes to run the middleware on.
   // This runs the middleware on all routes except for static assets.
+  // Exclude /api/uploadthing so Arcjet/Kinde do not block UploadThing callbacks.
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|api/uploadthing|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
   ],
 };
 
@@ -27,30 +28,9 @@ const aj = arcjet({
   ],
 });
 
-// Pass any existing middleware with the optional existingMiddleware prop
-// async function existingMiddleware(req: NextRequest) {
-//   const anyReq = req as {
-//     nextUrl: NextRequest["nextUrl"];
-//     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//     kindeAuth?: { token?: any; user?: any };
-//   };
-
-//   const url = req.nextUrl;
-
-//   const orgCode =
-//     anyReq.kindeAuth?.user?.org_code || anyReq.kindeAuth?.token?.org_code || anyReq.kindeAuth?.token?.claims?.org_code;
-
-//   // Redirect /workspace to /workspace/{orgCode}
-//   if (url.pathname.startsWith("/workspace") && orgCode && !url.pathname.startsWith(`/workspace/${orgCode}`)) {
-//     return NextResponse.redirect(new URL(`/workspace/${orgCode}`, req.url));
-//   }
-
-//   return NextResponse.next();
-// }
-
 export default createMiddleware(
   aj,
   withAuth(undefined, {
-    publicPaths: ["/"],
+    publicPaths: ["/", "/api/uploadthing"],
   }) as NextProxy
 );

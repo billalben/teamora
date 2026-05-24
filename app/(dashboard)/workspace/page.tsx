@@ -13,9 +13,3 @@ const WorksspacePage = async () => {
 };
 
 export default WorksspacePage;
-
-// const WorksspacePage = async () => {
-//   return <div></div>;
-// };
-
-// export default WorksspacePage;

@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useAttachmentUpload } from "@/hooks/use-attachement-upload";
 
 interface IAppProps {
   channelId: string;
@@ -16,6 +17,7 @@ interface IAppProps {
 
 export function MessageInputForm({ channelId }: IAppProps) {
   const [editorKey, setEditorKey] = useState(0);
+  const upload = useAttachmentUpload();
 
   const form = useForm<CreateMessageSchemaType>({
     resolver: zodResolver(createMessageSchema),
@@ -28,7 +30,8 @@ export function MessageInputForm({ channelId }: IAppProps) {
   const createMessageMutation = useMutation(
     orpc.message.create.mutationOptions({
       onSuccess: () => {
-        form.reset();
+        form.reset({ channelId, content: "" });
+        upload.clearStagedAttachment();
         setEditorKey((prev) => prev + 1);
 
         queryClient.invalidateQueries({
@@ -45,7 +48,10 @@ export function MessageInputForm({ channelId }: IAppProps) {
 
   const onSubmit = (data: CreateMessageSchemaType) => {
     // console.log("data submitted: ", data);
-    createMessageMutation.mutate(data);
+    createMessageMutation.mutate({
+      ...data,
+      imageUrl: upload.stagedAttachment?.url ?? undefined,
+    });
   };
 
   return (
@@ -57,11 +63,12 @@ export function MessageInputForm({ channelId }: IAppProps) {
           render={({ field, fieldState }) => (
             <Field data-invalid={!!fieldState.error}>
               <MessageComposer
+                key={editorKey} // to reset editor state
                 value={field.value}
                 onChange={field.onChange}
                 onSubmit={form.handleSubmit(onSubmit)}
                 isSubmitting={createMessageMutation.isPending}
-                editorKey={editorKey}
+                upload={upload}
               />
               {fieldState.error && <div className="text-xs text-destructive mt-1">{fieldState.error.message}</div>}
             </Field>

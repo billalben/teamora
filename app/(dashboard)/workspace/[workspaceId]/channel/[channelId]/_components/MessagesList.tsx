@@ -4,21 +4,33 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { MessageItem } from "./message/MessageItem";
 import { orpc } from "@/lib/orpc";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { MessageCircleOffIcon } from "lucide-react";
+import { ChevronDown, MessageCircleOffIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AnimatePresence, motion } from "motion/react";
+
+const SCROLL_THRESHOLD_PX = 80;
+
+function isNearBottom(el: HTMLDivElement) {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_THRESHOLD_PX;
+}
 
 export function MessagesList() {
   const params = useParams<{ channelId: string }>();
 
   const hasInitialScrolledRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const prevLastMessageIdRef = useRef<string | undefined>(undefined);
+
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
 
   const infinteOptions = orpc.message.list.infiniteOptions({
     input: (pageParam: string | undefined) => ({
       channelId: params.channelId,
       cursor: pageParam,
-      limit: 25,
+      limit: 8,
     }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
@@ -30,7 +42,6 @@ export function MessagesList() {
         }))
         .reverse(),
       pageParams: [...data.pageParams].reverse(),
-      // items: data.pages.flatMap((page) => page.items),
     }),
   });
 
@@ -44,13 +55,26 @@ export function MessagesList() {
     return query.data?.pages.flatMap((page) => page.items) ?? [];
   }, [query.data]);
 
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    el.scrollTo({ top: el.scrollHeight, behavior });
+    setHasNewMessages(false);
+    setIsAtBottom(true);
+  }, []);
+
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
 
-    if (el.scrollTop <= 80 && query.hasNextPage && !query.isFetchingNextPage) {
-      // console.log("Fetching next page...");
+    const atBottom = isNearBottom(el);
+    setIsAtBottom(atBottom);
+    if (atBottom) {
+      setHasNewMessages(false);
+    }
 
+    if (el.scrollTop <= SCROLL_THRESHOLD_PX && query.hasNextPage && !query.isFetchingNextPage) {
       const previousScrollHeight = el.scrollHeight;
       const previousScrollTop = el.scrollTop;
       query.fetchNextPage().then(() => {
@@ -67,9 +91,38 @@ export function MessagesList() {
       if (el) {
         el.scrollTop = el.scrollHeight;
         hasInitialScrolledRef.current = true;
+        prevLastMessageIdRef.current = items[items.length - 1]?.id;
       }
     }
-  }, [query.data?.pages.length]);
+  }, [query.data?.pages.length, items]);
+
+  // New message at the bottom: auto-scroll if pinned, else show "New messages"
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || items.length === 0) return;
+
+    const lastId = items[items.length - 1]?.id;
+    const prevLastId = prevLastMessageIdRef.current;
+
+    if (prevLastId && lastId && lastId !== prevLastId) {
+      if (isNearBottom(el)) {
+        el.scrollTop = el.scrollHeight;
+        queueMicrotask(() => {
+          setHasNewMessages(false);
+          setIsAtBottom(true);
+        });
+      } else {
+        queueMicrotask(() => {
+          setHasNewMessages(true);
+          setIsAtBottom(false);
+        });
+      }
+    }
+
+    prevLastMessageIdRef.current = lastId;
+  }, [items]);
+
+  const showNewMessagesButton = !isAtBottom && hasNewMessages;
 
   return (
     <div className="relative h-full">
@@ -79,7 +132,6 @@ export function MessagesList() {
         </div>
       )}
 
-      {/* check if there is data to show the message or empty ui */}
       {items.length === 0 ? (
         <Empty className="h-full">
           <EmptyHeader>
@@ -91,14 +143,47 @@ export function MessagesList() {
           </EmptyHeader>
         </Empty>
       ) : (
-        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto px-4">
-          {items?.map((message) => (
+        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto px-4 flex flex-col gap-4">
+          {items.map((message) => (
             <MessageItem key={message.id} message={message} />
           ))}
         </div>
       )}
 
-      {/* TODO: new messages button to scroll bottom */}
+      <AnimatePresence>
+        {showNewMessagesButton && (
+          <motion.div
+            key="new-messages"
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 420, damping: 28 }}
+            className="absolute bottom-4 end-10 z-10"
+          >
+            <motion.div
+              animate={{ boxShadow: ["0 4px 14px rgb(0 0 0 / 0.12)", "0 6px 20px rgb(0 0 0 / 0.18)", "0 4px 14px rgb(0 0 0 / 0.12)"] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              className="rounded-md"
+            >
+              <Button type="button" size="sm" className="gap-2 pr-3 shadow-none" onClick={() => scrollToBottom()}>
+                <span className="relative flex size-2 shrink-0">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary-foreground/50" />
+                  <span className="relative inline-flex size-2 rounded-full bg-primary-foreground" />
+                </span>
+                New messages
+                <motion.span
+                  aria-hidden
+                  animate={{ y: [0, 3, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
+                  className="inline-flex"
+                >
+                  <ChevronDown className="size-4" />
+                </motion.span>
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

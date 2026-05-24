@@ -1,6 +1,7 @@
 import { createWorkspaces, listWorkspaces } from "./workspace";
 import { createChannel, listChannels } from "./channel";
 import { createMessage, listMessages } from "./message";
+import { deleteUpload } from "./attachment";
 
 export const router = {
   workspace: {
@@ -14,5 +15,8 @@ export const router = {
   message: {
     create: createMessage,
     list: listMessages,
+  },
+  attachment: {
+    deleteUpload,
   },
 };
