@@ -46,7 +46,7 @@ export function MenuBar({ editor }: MenuBarProps) {
       <TooltipProvider>
         <div className="flex flex-wrap gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Toggle
                 size="sm"
                 pressed={editorState?.isBoldActive}
@@ -60,7 +60,7 @@ export function MenuBar({ editor }: MenuBarProps) {
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Toggle
                 size="sm"
                 pressed={editorState?.isItalicActive}
@@ -74,7 +74,7 @@ export function MenuBar({ editor }: MenuBarProps) {
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Toggle
                 size="sm"
                 pressed={editorState?.isStrikeActive}
@@ -88,7 +88,7 @@ export function MenuBar({ editor }: MenuBarProps) {
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Toggle
                 size="sm"
                 pressed={editorState?.isCodeBlockActive}
@@ -106,7 +106,7 @@ export function MenuBar({ editor }: MenuBarProps) {
 
         <div className="flex flex-wrap gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Toggle
                 size="sm"
                 pressed={editorState?.isBulletListActive}
@@ -120,7 +120,7 @@ export function MenuBar({ editor }: MenuBarProps) {
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Toggle
                 size="sm"
                 pressed={editorState?.isOrderedListActive}
@@ -138,7 +138,7 @@ export function MenuBar({ editor }: MenuBarProps) {
 
         <div className="flex flex-wrap gap-1">
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Button
                 onClick={() => editor.chain().focus().undo().run()}
                 disabled={!editorState?.canUndo}
@@ -153,7 +153,7 @@ export function MenuBar({ editor }: MenuBarProps) {
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Button
                 onClick={() => editor.chain().focus().redo().run()}
                 disabled={!editorState?.canRedo}

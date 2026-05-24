@@ -75,7 +75,7 @@ export function CreateNewChannel() {
 
   return (
     <Dialog open={openDialog} onOpenChange={handleModalChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <Button variant="outline" className="w-full">
           <PlusIcon className="size-4" />
           Add Channel

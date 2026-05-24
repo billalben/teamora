@@ -81,16 +81,18 @@ export function CreateWorkspace() {
     // disabled dialog close when mutation is in progress
     <Dialog open={openDialog} onOpenChange={handleOpenChange}>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-12 rounded-xl border-2 border-dashed border-muted-foreground/50 text-muted-foreground hover:border-muted-foreground hover:rounded-lg transition-all dureation-200"
-            >
-              <PlusIcon className="size-5" />
-            </Button>
-          </DialogTrigger>
+        <TooltipTrigger>
+          <DialogTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-12 rounded-xl border-2 border-dashed border-muted-foreground/50 text-muted-foreground hover:border-muted-foreground hover:rounded-lg transition-all dureation-200"
+              >
+                <PlusIcon className="size-5" />
+              </Button>
+            }
+          />
         </TooltipTrigger>
 
         <TooltipContent side="right">

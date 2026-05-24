@@ -1,7 +1,6 @@
 "use client";
 
-import { DialogTitle } from "@radix-ui/react-dialog";
-import { Dialog, DialogContent, DialogHeader } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UploadDropzone } from "@/lib/uploadthing";
 import { toast } from "sonner";
 

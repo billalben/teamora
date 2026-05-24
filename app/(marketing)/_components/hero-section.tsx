@@ -136,14 +136,14 @@ export default function HeroSection() {
                 className="mt-12 flex flex-col items-center justify-center gap-2 md:flex-row"
               >
                 <div key={1} className="bg-foreground/10 rounded-[calc(var(--radius-xl)+0.125rem)] border p-0.5">
-                  <Button asChild size="lg" className="rounded-xl px-5 text-base">
+                  <Button size="lg" className="rounded-xl px-5 text-base">
                     <Link href="#link">
                       <span className="text-nowrap">Start Building</span>
                     </Link>
                   </Button>
                 </div>
 
-                <Button key={2} asChild size="lg" variant="ghost" className="h-10.5 rounded-xl px-5">
+                <Button key={2} size="lg" variant="ghost" className="h-10.5 rounded-xl px-5">
                   <Link href="#link">
                     <span className="text-nowrap">Request a demo</span>
                   </Link>

@@ -55,14 +55,16 @@ export function WorkspaceList() {
 
           return (
             <Tooltip key={workspace.id}>
-              <TooltipTrigger asChild>
-                {/* disabled to login again if we are already in this workspace */}
-                {isActive ? (
-                  renderWorkspaceIcon(workspace, isActive)
-                ) : (
-                  <LoginLink orgCode={workspace.id}>{renderWorkspaceIcon(workspace, isActive)}</LoginLink>
-                )}
-              </TooltipTrigger>
+              {/* disabled to login again if we are already in this workspace */}
+              <TooltipTrigger
+                render={
+                  isActive ? (
+                    renderWorkspaceIcon(workspace, isActive)
+                  ) : (
+                    <LoginLink orgCode={workspace.id}>{renderWorkspaceIcon(workspace, isActive)}</LoginLink>
+                  )
+                }
+              />
 
               <TooltipContent side="right">
                 <p>
