@@ -4,21 +4,32 @@ import { useParams } from "next/navigation";
 import { ChannelHeader } from "./_components/ChannelHeader";
 import { MessageInputForm } from "./_components/message/MessageInputForm";
 import { MessagesList } from "./_components/MessagesList";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/lib/orpc";
 
 const ChannelPageMain = () => {
   const { channelId } = useParams<{ channelId: string }>();
+  const { data, isError } = useQuery(
+    orpc.channel.get.queryOptions({
+      input: { channelId },
+    })
+  );
+
+  if (isError) {
+    return <p>error</p>;
+  }
 
   return (
     <div className="flex h-screen w-full">
       <div className="flex flex-col flex-1 min-w-0">
-        <ChannelHeader />
+        <ChannelHeader channelName={data?.channelName} />
 
         <div className="flex-1 overflow-hidden my-2 mb-4">
           <MessagesList />
         </div>
 
         <div className="border-t bg-background p-4">
-          <MessageInputForm channelId={channelId} />
+          <MessageInputForm channelId={channelId} user={data?.currentUser} />
         </div>
       </div>
     </div>

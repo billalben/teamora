@@ -10,12 +10,14 @@ import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useAttachmentUpload } from "@/hooks/use-attachement-upload";
+import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 
 interface IAppProps {
   channelId: string;
+  user: KindeUser<Record<string, unknown>> | undefined;
 }
 
-export function MessageInputForm({ channelId }: IAppProps) {
+export function MessageInputForm({ channelId, user }: IAppProps) {
   const [editorKey, setEditorKey] = useState(0);
   const upload = useAttachmentUpload();
 
