@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { MessageItem } from "./message/MessageItem";
 import { orpc } from "@/lib/orpc";
 import { useParams } from "next/navigation";
@@ -50,6 +50,10 @@ export function MessagesList() {
     staleTime: 30_000, // 30 seconds
     refetchOnWindowFocus: false,
   });
+
+  const {
+    data: { user },
+  } = useSuspenseQuery(orpc.workspace.list.queryOptions());
 
   const items = useMemo(() => {
     return query.data?.pages.flatMap((page) => page.items) ?? [];
@@ -145,7 +149,7 @@ export function MessagesList() {
       ) : (
         <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto px-4 flex flex-col gap-4">
           {items.map((message) => (
-            <MessageItem key={message.id} message={message} />
+            <MessageItem key={message.id} message={message} user={user} />
           ))}
         </div>
       )}
@@ -161,7 +165,13 @@ export function MessagesList() {
             className="absolute bottom-4 end-10 z-10"
           >
             <motion.div
-              animate={{ boxShadow: ["0 4px 14px rgb(0 0 0 / 0.12)", "0 6px 20px rgb(0 0 0 / 0.18)", "0 4px 14px rgb(0 0 0 / 0.12)"] }}
+              animate={{
+                boxShadow: [
+                  "0 4px 14px rgb(0 0 0 / 0.12)",
+                  "0 6px 20px rgb(0 0 0 / 0.18)",
+                  "0 4px 14px rgb(0 0 0 / 0.12)",
+                ],
+              }}
               transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
               className="rounded-md"
             >

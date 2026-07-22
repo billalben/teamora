@@ -43,7 +43,7 @@ export const inviteMember = base
         },
       });
     } catch {
-      throw errors.INTERNAL_SERVER_ERROR;
+      throw errors.INTERNAL_SERVER_ERROR();
     }
   });
 
@@ -70,11 +70,11 @@ export const listMembers = base
       });
 
       if (!data.organization_users) {
-        throw errors.NOT_FOUND;
+        throw errors.NOT_FOUND();
       }
 
       return data.organization_users;
     } catch {
-      throw errors.INTERNAL_SERVER_ERROR;
+      throw errors.INTERNAL_SERVER_ERROR();
     }
   });

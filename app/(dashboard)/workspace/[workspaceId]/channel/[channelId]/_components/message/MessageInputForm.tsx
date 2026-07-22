@@ -49,7 +49,6 @@ export function MessageInputForm({ channelId, user }: IAppProps) {
   );
 
   const onSubmit = (data: CreateMessageSchemaType) => {
-    // console.log("data submitted: ", data);
     createMessageMutation.mutate({
       ...data,
       imageUrl: upload.stagedAttachment?.url ?? undefined,
