@@ -38,6 +38,17 @@ export const createMessage = base
       throw errors.FORBIDDEN(); // channel not found or doesn't belong to workspace
     }
 
+    // if this is a thread reply, validate the parent message
+    if (input.threadId) {
+      const parentMessage = await prisma.message.findUnique({
+        where: { id: input.threadId, channel: { workspaceId: context.workspace.orgCode } },
+      });
+
+      if (!parentMessage || parentMessage.channelId !== input.channelId || parentMessage.threadId !== null) {
+        throw errors.NOT_FOUND(); // parent message not found
+      }
+    }
+
     const created = await prisma.message.create({
       data: {
         content: input.content,
@@ -47,6 +58,7 @@ export const createMessage = base
         authorAvatarUrl: getAvatar({ email: context.user.email, picture: context.user.picture }),
         authorEmail: context.user.email!,
         authorName: context.user.given_name ?? "unknown",
+        threadId: input.threadId ?? null,
       },
     });
 
@@ -95,6 +107,7 @@ export const listMessages = base
     const messages = await prisma.message.findMany({
       where: {
         channelId: input.channelId,
+        threadId: null,
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: input.limit + 1,
@@ -153,5 +166,56 @@ export const updateMessage = base
     return {
       message: updated,
       canEdit: updated.authorId === context.user.id,
+    };
+  });
+
+export const listThreadReplies = base
+  .use(requiredAuthMiddleware)
+  .use(requiredWorspaceMiddleware)
+  .use(standardSecurityMiddleware)
+  .use(readSecurityMiddleware)
+  .route({
+    method: "GET",
+    path: "/messages/:messageId/thread",
+    summary: "List Thread Replies",
+    description: "List replies to a thread.",
+    tags: ["Message"],
+  })
+  .input(
+    z.object({
+      messageId: z.string(),
+    })
+  )
+  .output(
+    z.object({
+      parent: z.custom<Message>(),
+      messages: z.array(z.custom<Message>()),
+    })
+  )
+  .handler(async ({ input, context, errors }) => {
+    const parentRow = await prisma.message.findUnique({
+      where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
+    });
+
+    if (!parentRow) {
+      throw errors.NOT_FOUND(); // parent message not found
+    }
+
+    const replies = await prisma.message.findMany({
+      where: { threadId: input.messageId },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    });
+
+    const parent = {
+      ...parentRow,
+    };
+
+    const messages = replies.map((reply) => ({
+      ...reply,
+    }));
+
+    return {
+      parent,
+      messages,
     };
   });

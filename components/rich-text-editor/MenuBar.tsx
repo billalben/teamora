@@ -46,58 +46,66 @@ export function MenuBar({ editor }: MenuBarProps) {
       <TooltipProvider>
         <div className="flex flex-wrap gap-1">
           <Tooltip>
-            <TooltipTrigger>
-              <Toggle
-                size="sm"
-                pressed={editorState?.isBoldActive}
-                onPressedChange={() => editor.chain().focus().toggleBold().run()}
-                className={cn(editorState?.isBoldActive && "bg-muted text-muted-foreground")}
-              >
-                <BoldIcon />
-              </Toggle>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  size="sm"
+                  pressed={editorState?.isBoldActive}
+                  onPressedChange={() => editor.chain().focus().toggleBold().run()}
+                  className={cn(editorState?.isBoldActive && "bg-muted text-muted-foreground")}
+                >
+                  <BoldIcon />
+                </Toggle>
+              }
+            />
             <TooltipContent>Bold</TooltipContent>
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger>
-              <Toggle
-                size="sm"
-                pressed={editorState?.isItalicActive}
-                onPressedChange={() => editor.chain().focus().toggleItalic().run()}
-                className={cn(editorState?.isItalicActive && "bg-muted text-muted-foreground")}
-              >
-                <ItalicIcon />
-              </Toggle>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  size="sm"
+                  pressed={editorState?.isItalicActive}
+                  onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+                  className={cn(editorState?.isItalicActive && "bg-muted text-muted-foreground")}
+                >
+                  <ItalicIcon />
+                </Toggle>
+              }
+            />
             <TooltipContent>Italic</TooltipContent>
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger>
-              <Toggle
-                size="sm"
-                pressed={editorState?.isStrikeActive}
-                onPressedChange={() => editor.chain().focus().toggleStrike().run()}
-                className={cn(editorState?.isStrikeActive && "bg-muted text-muted-foreground")}
-              >
-                <StrikethroughIcon />
-              </Toggle>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  size="sm"
+                  pressed={editorState?.isStrikeActive}
+                  onPressedChange={() => editor.chain().focus().toggleStrike().run()}
+                  className={cn(editorState?.isStrikeActive && "bg-muted text-muted-foreground")}
+                >
+                  <StrikethroughIcon />
+                </Toggle>
+              }
+            />
             <TooltipContent>Strike</TooltipContent>
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger>
-              <Toggle
-                size="sm"
-                pressed={editorState?.isCodeBlockActive}
-                onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
-                className={cn(editorState?.isCodeBlockActive && "bg-muted text-muted-foreground")}
-              >
-                <CodeIcon />
-              </Toggle>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  size="sm"
+                  pressed={editorState?.isCodeBlockActive}
+                  onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
+                  className={cn(editorState?.isCodeBlockActive && "bg-muted text-muted-foreground")}
+                >
+                  <CodeIcon />
+                </Toggle>
+              }
+            />
             <TooltipContent>Code Block</TooltipContent>
           </Tooltip>
         </div>
@@ -106,30 +114,34 @@ export function MenuBar({ editor }: MenuBarProps) {
 
         <div className="flex flex-wrap gap-1">
           <Tooltip>
-            <TooltipTrigger>
-              <Toggle
-                size="sm"
-                pressed={editorState?.isBulletListActive}
-                onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
-                className={cn(editorState?.isBulletListActive && "bg-muted text-muted-foreground")}
-              >
-                <ListIcon />
-              </Toggle>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  size="sm"
+                  pressed={editorState?.isBulletListActive}
+                  onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+                  className={cn(editorState?.isBulletListActive && "bg-muted text-muted-foreground")}
+                >
+                  <ListIcon />
+                </Toggle>
+              }
+            />
             <TooltipContent>Bullet List</TooltipContent>
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger>
-              <Toggle
-                size="sm"
-                pressed={editorState?.isOrderedListActive}
-                onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
-                className={cn(editorState?.isOrderedListActive && "bg-muted text-muted-foreground")}
-              >
-                <ListOrderedIcon />
-              </Toggle>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Toggle
+                  size="sm"
+                  pressed={editorState?.isOrderedListActive}
+                  onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
+                  className={cn(editorState?.isOrderedListActive && "bg-muted text-muted-foreground")}
+                >
+                  <ListOrderedIcon />
+                </Toggle>
+              }
+            />
             <TooltipContent>Ordered List</TooltipContent>
           </Tooltip>
         </div>
@@ -138,32 +150,36 @@ export function MenuBar({ editor }: MenuBarProps) {
 
         <div className="flex flex-wrap gap-1">
           <Tooltip>
-            <TooltipTrigger>
-              <Button
-                onClick={() => editor.chain().focus().undo().run()}
-                disabled={!editorState?.canUndo}
-                size="sm"
-                variant="ghost"
-                type="button"
-              >
-                <UndoIcon />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  onClick={() => editor.chain().focus().undo().run()}
+                  disabled={!editorState?.canUndo}
+                  size="sm"
+                  variant="ghost"
+                  type="button"
+                >
+                  <UndoIcon />
+                </Button>
+              }
+            />
             <TooltipContent>Undo</TooltipContent>
           </Tooltip>
 
           <Tooltip>
-            <TooltipTrigger>
-              <Button
-                onClick={() => editor.chain().focus().redo().run()}
-                disabled={!editorState?.canRedo}
-                size="sm"
-                variant="ghost"
-                type="button"
-              >
-                <RedoIcon />
-              </Button>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Button
+                  onClick={() => editor.chain().focus().redo().run()}
+                  disabled={!editorState?.canRedo}
+                  size="sm"
+                  variant="ghost"
+                  type="button"
+                >
+                  <RedoIcon />
+                </Button>
+              }
+            />
             <TooltipContent>Redo</TooltipContent>
           </Tooltip>
         </div>

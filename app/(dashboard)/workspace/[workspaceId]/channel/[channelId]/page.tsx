@@ -6,8 +6,12 @@ import { MessageInputForm } from "./_components/message/MessageInputForm";
 import { MessagesList } from "./_components/MessagesList";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
+import ThreadSidebar from "./_components/thread/ThreadSidebar";
+import { ThreadProvider, useThread } from "@/providers/ThreadProvider";
 
 const ChannelPageMain = () => {
+  const { isThreadOpen } = useThread();
+
   const { channelId } = useParams<{ channelId: string }>();
   const { data, isError } = useQuery(
     orpc.channel.get.queryOptions({
@@ -32,8 +36,18 @@ const ChannelPageMain = () => {
           <MessageInputForm channelId={channelId} user={data?.currentUser} />
         </div>
       </div>
+
+      {isThreadOpen && <ThreadSidebar />}
     </div>
   );
 };
 
-export default ChannelPageMain;
+const ChannelPage = () => {
+  return (
+    <ThreadProvider>
+      <ChannelPageMain />
+    </ThreadProvider>
+  );
+};
+
+export default ChannelPage;

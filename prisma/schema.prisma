@@ -10,11 +10,11 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model Channel {
-  id        String @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -23,27 +23,32 @@ model Channel {
   workspaceId String // Kinde org id
   createdById String // Kinde user id
 
-  messages  Message[]
+  messages Message[]
 
   @@unique([workspaceId, name])
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  content   String
-  imageUrl  String?
+  id       String  @id @default(uuid())
+  content  String
+  imageUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Foreign keys
-  authorId  String // Kinde user id
-  authorEmail String
-  authorName  String
+  authorId        String // Kinde user id
+  authorEmail     String
+  authorName      String
   authorAvatarUrl String?
 
   channelId String?
-  channel   Channel?  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  // Thread relations
+  parentMessage Message?  @relation("MessageThread", fields: [threadId], references: [id], onDelete: Cascade)
+  threadId      String?
+  replies       Message[] @relation("MessageThread")
 
   @@index([channelId])
 }
