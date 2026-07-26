@@ -7,11 +7,12 @@ import { useThread } from "@/providers/ThreadProvider";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { SafeContent } from "@/components/rich-text-editor/SafeContent";
+import { ThreadSidebarSkeleton } from "./ThreadSidebarSkeleton";
 
 export default function ThreadSidebar() {
   const { selectedThreadId, closeThread } = useThread();
 
-  const { data: threadData } = useQuery(
+  const { data: threadData, isLoading: isLoadingThread } = useQuery(
     orpc.message.thread.list.queryOptions({
       input: {
         messageId: selectedThreadId!,
@@ -19,6 +20,10 @@ export default function ThreadSidebar() {
       enabled: !!selectedThreadId,
     })
   );
+
+  if (isLoadingThread) {
+    return <ThreadSidebarSkeleton />;
+  }
 
   return (
     <div className="w-120 border-l flex flex-col h-full">
@@ -39,7 +44,7 @@ export default function ThreadSidebar() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         {threadData && (
-          <div className="p-4 border-b bg-muted/20">
+          <div className="p-4 bg-muted/20 h-full">
             <div className="flex gap-3">
               <Image
                 src={threadData.parent.authorAvatarUrl ?? ""}

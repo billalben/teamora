@@ -62,9 +62,7 @@ export const createMessage = base
       },
     });
 
-    return {
-      ...created,
-    };
+    return { ...created };
   });
 
 export const listMessages = base
@@ -88,7 +86,7 @@ export const listMessages = base
   )
   .output(
     z.object({
-      items: z.array(z.custom<Message>()),
+      items: z.array(z.custom<Message & { _count: { replies: number } }>()),
       nextCursor: z.string().nullable(),
     })
   )
@@ -113,6 +111,9 @@ export const listMessages = base
       take: input.limit + 1,
       cursor: input.cursor ? { id: input.cursor } : undefined,
       skip: input.cursor ? 1 : 0,
+      include: {
+        _count: { select: { replies: true } },
+      },
     });
 
     const hasMore = messages.length > input.limit;
@@ -181,20 +182,19 @@ export const listThreadReplies = base
     description: "List replies to a thread.",
     tags: ["Message"],
   })
-  .input(
-    z.object({
-      messageId: z.string(),
-    })
-  )
+  .input(z.object({ messageId: z.string() }))
   .output(
     z.object({
-      parent: z.custom<Message>(),
-      messages: z.array(z.custom<Message>()),
+      parent: z.custom<Message & { _count: { replies: number } }>(),
+      messages: z.array(z.custom<Message & { _count: { replies: number } }>()),
     })
   )
   .handler(async ({ input, context, errors }) => {
     const parentRow = await prisma.message.findUnique({
       where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
+      include: {
+        _count: { select: { replies: true } },
+      },
     });
 
     if (!parentRow) {
@@ -204,15 +204,14 @@ export const listThreadReplies = base
     const replies = await prisma.message.findMany({
       where: { threadId: input.messageId },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      include: {
+        _count: { select: { replies: true } },
+      },
     });
 
-    const parent = {
-      ...parentRow,
-    };
+    const parent = { ...parentRow };
 
-    const messages = replies.map((reply) => ({
-      ...reply,
-    }));
+    const messages = replies.map((reply) => ({ ...reply }));
 
     return {
       parent,

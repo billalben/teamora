@@ -9,13 +9,18 @@ import { MessageHoverToolbar } from "../toolbar";
 import { useState } from "react";
 import { EditMessage } from "../toolbar/EditMessage";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
+import { MessageSquareIcon } from "lucide-react";
+import { useThread } from "@/providers/ThreadProvider";
+
+export type MessageWithCount = Message & { _count: { replies: number } };
 
 type TProps = {
-  message: Message;
+  message: MessageWithCount;
   user: KindeUser<Record<string, unknown>>;
 };
 
 export function MessageItem({ message, user }: TProps) {
+  const { openThread } = useThread();
   const [isEditing, setIsEditing] = useState(false);
 
   const canEdit = user.id === message.authorId;
@@ -71,6 +76,22 @@ export function MessageItem({ message, user }: TProps) {
                   className="rounded-md object-cover max-h-80 w-auto max-w-full"
                 />
               </div>
+            )}
+
+            {message?._count?.replies > 0 && (
+              <button
+                type="button"
+                className="group mt-1 inline-flex items-center gap-x-2 text-xs text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border cursor-pointer"
+                onClick={() => openThread(message.id)}
+              >
+                <MessageSquareIcon className="size-4" />
+                <span>
+                  {message?._count?.replies} {message?._count?.replies === 1 ? "Reply" : "Replies"}
+                </span>
+                <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                  View Thread
+                </span>
+              </button>
             )}
           </>
         )}

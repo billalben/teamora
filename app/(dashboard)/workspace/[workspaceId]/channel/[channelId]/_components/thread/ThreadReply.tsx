@@ -28,6 +28,16 @@ export default function ThreadReply({ message }: ThreadReplyProps) {
           className="text-sm text-muted-foreground prose dark:prose-invert max-w-none marker:text-primary"
           content={JSON.parse(message.content)}
         />
+
+        {message.imageUrl && (
+          <Image
+            src={message.imageUrl}
+            alt={message.content}
+            width={512}
+            height={512}
+            className="rounded-md object-contain max-h-96 w-auto"
+          />
+        )}
       </div>
     </div>
   );
