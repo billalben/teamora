@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
 import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
@@ -48,33 +48,31 @@ export function WorkspaceList() {
   };
 
   return (
-    <TooltipProvider>
-      <div className="flex flex-col gap-2">
-        {data.workspaces.map((workspace) => {
-          const isActive = data.currentWorkspace.orgCode === workspace.id;
+    <div className="flex flex-col gap-2">
+      {data.workspaces.map((workspace) => {
+        const isActive = data.currentWorkspace.orgCode === workspace.id;
 
-          return (
-            <Tooltip key={workspace.id}>
-              {/* disabled to login again if we are already in this workspace */}
-              <TooltipTrigger
-                render={
-                  isActive ? (
-                    renderWorkspaceIcon(workspace, isActive)
-                  ) : (
-                    <LoginLink orgCode={workspace.id}>{renderWorkspaceIcon(workspace, isActive)}</LoginLink>
-                  )
-                }
-              />
+        return (
+          <Tooltip key={workspace.id}>
+            {/* disabled to login again if we are already in this workspace */}
+            <TooltipTrigger
+              render={
+                isActive ? (
+                  renderWorkspaceIcon(workspace, isActive)
+                ) : (
+                  <LoginLink orgCode={workspace.id}>{renderWorkspaceIcon(workspace, isActive)}</LoginLink>
+                )
+              }
+            />
 
-              <TooltipContent side="right">
-                <p>
-                  {workspace.name} {isActive && "(Current)"}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
-    </TooltipProvider>
+            <TooltipContent side="right">
+              <p>
+                {workspace.name} {isActive && "(Current)"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        );
+      })}
+    </div>
   );
 }

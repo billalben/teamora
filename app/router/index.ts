@@ -3,6 +3,7 @@ import { createChannel, getChannel, listChannels } from "./channel";
 import { createMessage, listMessages, updateMessage, listThreadReplies, toggleMessageReaction } from "./message";
 import { deleteUpload } from "./attachment";
 import { inviteMember, listMembers } from "./member";
+import { generateCompose, generateThreadSummary } from "./ai";
 
 export const router = {
   workspace: {
@@ -31,5 +32,15 @@ export const router = {
   },
   attachment: {
     deleteUpload,
+  },
+  ai: {
+    compose: {
+      generate: generateCompose,
+    },
+    thread: {
+      summary: {
+        generate: generateThreadSummary,
+      },
+    },
   },
 };

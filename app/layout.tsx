@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "./api/uploadthing/core";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,7 +49,9 @@ export default function RootLayout({
           />
 
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <Providers>{children}</Providers>
+            <Providers>
+              <TooltipProvider>{children}</TooltipProvider>
+            </Providers>
             <Toaster closeButton position="top-center" />
           </ThemeProvider>
         </body>

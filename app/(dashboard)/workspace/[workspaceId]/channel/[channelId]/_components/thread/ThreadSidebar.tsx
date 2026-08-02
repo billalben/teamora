@@ -10,6 +10,7 @@ import { SafeContent } from "@/components/rich-text-editor/SafeContent";
 import { ThreadSidebarSkeleton } from "./ThreadSidebarSkeleton";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
+import { SummarizeThread } from "./SummarizeThread";
 
 export default function ThreadSidebar() {
   const { selectedThreadId, closeThread } = useThread();
@@ -43,6 +44,8 @@ export default function ThreadSidebar() {
         </div>
 
         <div className="flex items-center gap-2">
+          {selectedThreadId && <SummarizeThread messageId={selectedThreadId} />}
+
           <Button variant="outline" size="icon" onClick={closeThread}>
             <XIcon className="size-4" />
           </Button>
