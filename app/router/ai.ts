@@ -8,6 +8,7 @@ import { streamText } from "ai";
 
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamToEventIterator } from "@orpc/server";
+import { aiSecuriyMiddleware } from "../middlewares/arcjet/ai";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.LLM_KEY,
@@ -165,6 +166,7 @@ Before responding, verify that:
 export const generateCompose = base
   .use(requiredAuthMiddleware)
   .use(requiredWorspaceMiddleware)
+  .use(aiSecuriyMiddleware)
   .route({
     method: "POST",
     path: "/ai/compose/generate",

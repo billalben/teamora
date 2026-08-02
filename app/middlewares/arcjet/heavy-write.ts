@@ -1,15 +1,23 @@
 import arcjet, { slidingWindow } from "@/lib/arcjet";
 import { base } from "../base";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
+import { sensitiveInfo } from "@arcjet/next";
 
 const buildHeavyWriteAj = () =>
-  arcjet.withRule(
-    slidingWindow({
-      mode: "LIVE",
-      interval: "1m",
-      max: 2,
-    })
-  );
+  arcjet
+    .withRule(
+      slidingWindow({
+        mode: "LIVE",
+        interval: "1m",
+        max: 2,
+      })
+    )
+    .withRule(
+      sensitiveInfo({
+        mode: "LIVE",
+        allow: ["CREDIT_CARD_NUMBER", "EMAIL", "PHONE_NUMBER", "IP_ADDRESS"],
+      })
+    );
 
 export const heavyWriteSecurityMiddleware = base
   .$context<{
@@ -25,6 +33,12 @@ export const heavyWriteSecurityMiddleware = base
       if (decision.reason.isRateLimit()) {
         throw errors.RATE_LIMITER({
           message: "Access denied: Rate limit exceeded.",
+        });
+      }
+
+      if (decision.reason.isSensitiveInfo()) {
+        throw errors.BAD_REQUEST({
+          message: "Access denied: Sensitive information detected.",
         });
       }
 
