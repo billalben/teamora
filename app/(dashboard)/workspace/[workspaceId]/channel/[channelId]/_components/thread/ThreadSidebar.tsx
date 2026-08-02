@@ -4,13 +4,19 @@ import Image from "next/image";
 import ThreadReply from "./ThreadReply";
 import ThreadReplyForm from "./ThreadReplyForm";
 import { useThread } from "@/providers/ThreadProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { SafeContent } from "@/components/rich-text-editor/SafeContent";
 import { ThreadSidebarSkeleton } from "./ThreadSidebarSkeleton";
+import { ReactionsBar } from "../reaction/ReactionsBar";
+import { groupReactions } from "../reaction/groupReactions";
 
 export default function ThreadSidebar() {
   const { selectedThreadId, closeThread } = useThread();
+
+  const {
+    data: { user },
+  } = useSuspenseQuery(orpc.workspace.list.queryOptions());
 
   const { data: threadData, isLoading: isLoadingThread } = useQuery(
     orpc.message.thread.list.queryOptions({
@@ -24,6 +30,8 @@ export default function ThreadSidebar() {
   if (isLoadingThread) {
     return <ThreadSidebarSkeleton />;
   }
+
+  const parentReactions = threadData ? groupReactions(threadData.parent.messageReactions ?? [], user.id ?? "") : [];
 
   return (
     <div className="w-120 border-l flex flex-col h-full">
@@ -67,6 +75,12 @@ export default function ThreadSidebar() {
                   className="text-sm text-muted-foreground"
                   content={JSON.parse(threadData.parent.content)}
                 />
+
+                <ReactionsBar
+                  context={{ type: "thread", threadId: threadData.parent.id }}
+                  messageId={threadData.parent.id}
+                  reactions={parentReactions}
+                />
               </div>
             </div>
 
@@ -75,9 +89,10 @@ export default function ThreadSidebar() {
               <p className="text-sm text-muted-foreground">{threadData.messages.length} replies</p>
 
               <div className="space-y-3">
-                {threadData.messages.map((reply) => (
-                  <ThreadReply key={reply.id} message={reply} />
-                ))}
+                {selectedThreadId &&
+                  threadData.messages.map((reply) => (
+                    <ThreadReply key={reply.id} message={reply} selectedThreadId={selectedThreadId} user={user} />
+                  ))}
               </div>
             </div>
           </div>

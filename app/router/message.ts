@@ -5,10 +5,20 @@ import { requiredAuthMiddleware } from "../middlewares/auth";
 import { base } from "../middlewares/base";
 import { requiredWorspaceMiddleware } from "../middlewares/workspace";
 import prisma from "@/lib/prisma";
-import { createMessageSchema, updateMessageSchema } from "../schemas/message";
+import {
+  createMessageSchema,
+  groupReactionSchema,
+  GroupReactionSchemaType,
+  toggleMessageReactionSchema,
+  updateMessageSchema,
+} from "../schemas/message";
 import { getAvatar } from "@/lib/getAvatar";
 import { Message } from "@/lib/generated/prisma/client";
 import { readSecurityMiddleware } from "../middlewares/arcjet/read";
+
+type MessageReactions = { messageReactions: { emoji: string; userId: string }[] };
+const messageWithReactions = z.custom<Message & MessageReactions & { _count: { replies: number } }>();
+const messageWithReactionsOnly = z.custom<Message & MessageReactions>();
 
 export const createMessage = base
   .use(requiredAuthMiddleware)
@@ -23,7 +33,7 @@ export const createMessage = base
     tags: ["Message"],
   })
   .input(createMessageSchema)
-  .output(z.custom<Message>())
+  .output(messageWithReactionsOnly)
   .handler(async ({ input, context, errors }) => {
     // verify the channel belongs to the workspace
 
@@ -60,9 +70,12 @@ export const createMessage = base
         authorName: context.user.given_name ?? "unknown",
         threadId: input.threadId ?? null,
       },
+      include: {
+        messageReactions: { select: { emoji: true, userId: true } },
+      },
     });
 
-    return { ...created };
+    return created;
   });
 
 export const listMessages = base
@@ -86,7 +99,7 @@ export const listMessages = base
   )
   .output(
     z.object({
-      items: z.array(z.custom<Message & { _count: { replies: number } }>()),
+      items: z.array(messageWithReactions),
       nextCursor: z.string().nullable(),
     })
   )
@@ -113,6 +126,7 @@ export const listMessages = base
       skip: input.cursor ? 1 : 0,
       include: {
         _count: { select: { replies: true } },
+        messageReactions: { select: { emoji: true, userId: true } },
       },
     });
 
@@ -141,7 +155,7 @@ export const updateMessage = base
   .input(updateMessageSchema)
   .output(
     z.object({
-      message: z.custom<Message>(),
+      message: messageWithReactionsOnly,
       canEdit: z.boolean(),
     })
   )
@@ -162,6 +176,9 @@ export const updateMessage = base
     const updated = await prisma.message.update({
       where: { id: input.messageId },
       data: { content: input.content },
+      include: {
+        messageReactions: { select: { emoji: true, userId: true } },
+      },
     });
 
     return {
@@ -185,8 +202,8 @@ export const listThreadReplies = base
   .input(z.object({ messageId: z.string() }))
   .output(
     z.object({
-      parent: z.custom<Message & { _count: { replies: number } }>(),
-      messages: z.array(z.custom<Message & { _count: { replies: number } }>()),
+      parent: messageWithReactions,
+      messages: z.array(messageWithReactions),
     })
   )
   .handler(async ({ input, context, errors }) => {
@@ -194,6 +211,7 @@ export const listThreadReplies = base
       where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
       include: {
         _count: { select: { replies: true } },
+        messageReactions: { select: { emoji: true, userId: true } },
       },
     });
 
@@ -206,15 +224,113 @@ export const listThreadReplies = base
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       include: {
         _count: { select: { replies: true } },
+        messageReactions: { select: { emoji: true, userId: true } },
       },
     });
 
-    const parent = { ...parentRow };
+    return {
+      parent: parentRow,
+      messages: replies,
+    };
+  });
 
-    const messages = replies.map((reply) => ({ ...reply }));
+function groupReactions(reactions: { emoji: string; userId: string }[], userId: string): GroupReactionSchemaType[] {
+  const reactionMap = new Map<string, { count: number; reactedByMe: boolean }>();
+
+  for (const reaction of reactions) {
+    const existing = reactionMap.get(reaction.emoji);
+
+    if (existing) {
+      existing.count++;
+
+      if (reaction.userId === userId) {
+        existing.reactedByMe = true;
+      }
+    } else {
+      reactionMap.set(reaction.emoji, { count: 1, reactedByMe: reaction.userId === userId });
+    }
+  }
+
+  return Array.from(reactionMap.entries()).map(([emoji, { count, reactedByMe }]) => ({
+    emoji,
+    count,
+    reactedByMe,
+  }));
+}
+
+export const toggleMessageReaction = base
+  .use(requiredAuthMiddleware)
+  .use(requiredWorspaceMiddleware)
+  .use(standardSecurityMiddleware)
+  .use(writeSecurityMiddleware)
+  .route({
+    method: "POST",
+    path: "/messages/:messageId/reactions",
+    summary: "Toggle Message Reaction",
+    description: "Toggle a reaction on a message.",
+    tags: ["Message"],
+  })
+  .input(toggleMessageReactionSchema)
+  .output(
+    z.object({
+      messageId: z.string(),
+      reactions: z.array(groupReactionSchema),
+    })
+  )
+  .handler(async ({ input, context, errors }) => {
+    const message = await prisma.message.findUnique({
+      where: {
+        id: input.messageId,
+        channel: { workspaceId: context.workspace.orgCode },
+      },
+      select: { id: true },
+    });
+
+    if (!message) {
+      throw errors.NOT_FOUND(); // message not found
+    }
+
+    const inserted = await prisma.messageReaction.createMany({
+      data: [
+        {
+          emoji: input.emoji,
+          messageId: input.messageId,
+          userId: context.user.id,
+          userName: context.user.given_name ?? "unknown",
+          userEmail: context.user.email ?? "",
+          userAvatarUrl: getAvatar({ email: context.user.email, picture: context.user.picture }),
+        },
+      ],
+      skipDuplicates: true,
+    });
+
+    if (inserted.count === 0) {
+      await prisma.messageReaction.deleteMany({
+        where: {
+          userId: context.user.id,
+          messageId: input.messageId,
+          emoji: input.emoji,
+        },
+      });
+    }
+
+    const updated = await prisma.message.findUnique({
+      where: { id: input.messageId },
+      include: {
+        messageReactions: { select: { emoji: true, userId: true } },
+        _count: { select: { replies: true } },
+      },
+    });
+
+    if (!updated) {
+      throw errors.NOT_FOUND(); // message not found
+    }
 
     return {
-      parent,
-      messages,
+      messageId: updated.id,
+      reactions: groupReactions(
+        (updated.messageReactions ?? []).map((r) => ({ emoji: r.emoji, userId: r.userId })),
+        context.user.id
+      ),
     };
   });

@@ -6,13 +6,18 @@ import { Message } from "@/lib/generated/prisma/client";
 import { getAvatar } from "@/lib/getAvatar";
 import Image from "next/image";
 import { MessageHoverToolbar } from "../toolbar";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EditMessage } from "../toolbar/EditMessage";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
 import { MessageSquareIcon } from "lucide-react";
 import { useThread } from "@/providers/ThreadProvider";
+import { ReactionsBar } from "../reaction/ReactionsBar";
+import { groupReactions } from "../reaction/groupReactions";
 
-export type MessageWithCount = Message & { _count: { replies: number } };
+export type MessageWithCount = Message & {
+  _count: { replies: number };
+  messageReactions: { emoji: string; userId: string }[];
+};
 
 type TProps = {
   message: MessageWithCount;
@@ -27,6 +32,11 @@ export function MessageItem({ message, user }: TProps) {
   const handleEdit = () => {
     setIsEditing((prev) => !prev);
   };
+
+  const groupedReactions = useMemo(
+    () => groupReactions(message.messageReactions ?? [], user.id ?? ""),
+    [message.messageReactions, user.id]
+  );
 
   return (
     <div className="flex space-x-3 relative p-2 rounded-lg group hover:bg-muted/50">
@@ -77,6 +87,12 @@ export function MessageItem({ message, user }: TProps) {
                 />
               </div>
             )}
+
+            <ReactionsBar
+              messageId={message.id}
+              reactions={groupedReactions}
+              context={{ type: "channel", threadId: message.id }}
+            />
 
             {message?._count?.replies > 0 && (
               <button
