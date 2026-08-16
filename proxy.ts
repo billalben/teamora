@@ -30,7 +30,7 @@ const aj = arcjet({
 
 export default createMiddleware(
   aj,
-  withAuth(undefined, {
+  withAuth({
     publicPaths: ["/", "/api/uploadthing"],
   }) as NextProxy
 );

@@ -126,6 +126,11 @@ export const HeroHeader = () => {
                           size: "sm",
                           className: cn(isScrolled ? "lg:inline-flex" : "hidden"),
                         })}
+                        authUrlParams={{
+                          is_create_org: "true",
+                          org_name: "teamora",
+                          pricing_table_key: "organization_plans",
+                        }}
                       >
                         Get Started
                       </RegisterLink>
