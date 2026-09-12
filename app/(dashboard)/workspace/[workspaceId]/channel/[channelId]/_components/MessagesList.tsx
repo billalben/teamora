@@ -3,6 +3,7 @@
 import { useInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { MessageItem } from "./message/MessageItem";
 import { orpc } from "@/lib/orpc";
+import { MESSAGE_PAGE_SIZE, messageListInfiniteKey } from "@/lib/query/message-keys";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -30,9 +31,10 @@ export function MessagesList() {
     input: (pageParam: string | undefined) => ({
       channelId: params.channelId,
       cursor: pageParam,
-      limit: 8,
+      limit: MESSAGE_PAGE_SIZE,
     }),
     initialPageParam: undefined,
+    queryKey: messageListInfiniteKey(params.channelId),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     select: (data) => ({
       pages: [...data.pages]

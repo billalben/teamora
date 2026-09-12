@@ -8,6 +8,8 @@ import { RichTextEditor } from "@/components/rich-text-editor/Editor";
 import { Button } from "@/components/ui/button";
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
+import { messageListInfiniteKey } from "@/lib/query/message-keys";
+import { useChannelRealtime } from "@/providers/ChannelRealtimeProvider";
 import { toast } from "sonner";
 import { Message } from "@/lib/generated/prisma/client";
 import { Loader2Icon } from "lucide-react";
@@ -20,6 +22,7 @@ type TProps = {
 
 export function EditMessage({ message, onCancel, onSave }: TProps) {
   const queryClient = useQueryClient();
+  const { send } = useChannelRealtime();
 
   const form = useForm<UpdateMessageSchemaType>({
     resolver: zodResolver(updateMessageSchema),
@@ -32,21 +35,25 @@ export function EditMessage({ message, onCancel, onSave }: TProps) {
         type TMessagePage = { items: Message[]; nextCursor?: string };
         type TInfiniteMessages = InfiniteData<TMessagePage>;
 
-        queryClient.setQueryData<TInfiniteMessages>(["message.list", message.channelId], (old) => {
-          if (!old) return old;
+        if (message.channelId) {
+          queryClient.setQueryData<TInfiniteMessages>(messageListInfiniteKey(message.channelId), (old) => {
+            if (!old) return old;
 
-          const updatedMessage = updated.message;
+            const updatedMessage = updated.message;
 
-          const pages = old.pages.map((page) => ({
-            ...page,
-            items: page.items.map((item) => (item.id === updatedMessage.id ? { ...item, ...updatedMessage } : item)),
-          }));
+            const pages = old.pages.map((page) => ({
+              ...page,
+              items: page.items.map((item) => (item.id === updatedMessage.id ? { ...item, ...updatedMessage } : item)),
+            }));
 
-          return {
-            ...old,
-            pages,
-          };
-        });
+            return {
+              ...old,
+              pages,
+            };
+          });
+        }
+
+        send({ type: "message:updated", payload: { message: updated.message } });
 
         toast.success("Message updated successfully");
         onSave();

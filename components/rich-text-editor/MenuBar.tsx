@@ -61,7 +61,7 @@ export function MenuBar({ editor }: MenuBarProps) {
             render={
               <Toggle
                 size="sm"
-                pressed={editorState?.isBoldActive}
+                pressed={editorState?.isBoldActive ?? false}
                 onPressedChange={() => editor.chain().focus().toggleBold().run()}
                 className={cn(editorState?.isBoldActive && "bg-muted text-muted-foreground")}
               >
@@ -77,7 +77,7 @@ export function MenuBar({ editor }: MenuBarProps) {
             render={
               <Toggle
                 size="sm"
-                pressed={editorState?.isItalicActive}
+                pressed={editorState?.isItalicActive ?? false}
                 onPressedChange={() => editor.chain().focus().toggleItalic().run()}
                 className={cn(editorState?.isItalicActive && "bg-muted text-muted-foreground")}
               >
@@ -93,7 +93,7 @@ export function MenuBar({ editor }: MenuBarProps) {
             render={
               <Toggle
                 size="sm"
-                pressed={editorState?.isStrikeActive}
+                pressed={editorState?.isStrikeActive ?? false}
                 onPressedChange={() => editor.chain().focus().toggleStrike().run()}
                 className={cn(editorState?.isStrikeActive && "bg-muted text-muted-foreground")}
               >
@@ -109,7 +109,7 @@ export function MenuBar({ editor }: MenuBarProps) {
             render={
               <Toggle
                 size="sm"
-                pressed={editorState?.isCodeBlockActive}
+                pressed={editorState?.isCodeBlockActive ?? false}
                 onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
                 className={cn(editorState?.isCodeBlockActive && "bg-muted text-muted-foreground")}
               >
@@ -129,7 +129,7 @@ export function MenuBar({ editor }: MenuBarProps) {
             render={
               <Toggle
                 size="sm"
-                pressed={editorState?.isBulletListActive}
+                pressed={editorState?.isBulletListActive ?? false}
                 onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
                 className={cn(editorState?.isBulletListActive && "bg-muted text-muted-foreground")}
               >
@@ -145,7 +145,7 @@ export function MenuBar({ editor }: MenuBarProps) {
             render={
               <Toggle
                 size="sm"
-                pressed={editorState?.isOrderedListActive}
+                pressed={editorState?.isOrderedListActive ?? false}
                 onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
                 className={cn(editorState?.isOrderedListActive && "bg-muted text-muted-foreground")}
               >

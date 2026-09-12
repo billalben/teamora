@@ -8,11 +8,11 @@ import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import ThreadSidebar from "./_components/thread/ThreadSidebar";
 import { ThreadProvider, useThread } from "@/providers/ThreadProvider";
+import { ChannelRealtimeProvider } from "@/providers/ChannelRealtimeProvider";
 
-const ChannelPageMain = () => {
+const ChannelPageMain = ({ channelId }: { channelId: string }) => {
   const { isThreadOpen } = useThread();
 
-  const { channelId } = useParams<{ channelId: string }>();
   const { data, isError } = useQuery(
     orpc.channel.get.queryOptions({
       input: { channelId },
@@ -43,9 +43,13 @@ const ChannelPageMain = () => {
 };
 
 const ChannelPage = () => {
+  const { channelId } = useParams<{ channelId: string }>();
+
   return (
     <ThreadProvider>
-      <ChannelPageMain />
+      <ChannelRealtimeProvider channelId={channelId}>
+        <ChannelPageMain channelId={channelId} />
+      </ChannelRealtimeProvider>
     </ThreadProvider>
   );
 };
