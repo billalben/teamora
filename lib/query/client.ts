@@ -1,8 +1,21 @@
-import { defaultShouldDehydrateQuery, QueryClient } from "@tanstack/react-query";
+import { defaultShouldDehydrateQuery, MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
+import { ORPCError } from "@orpc/client";
 import { serializer } from "../serializer";
 
-export function createQueryClient() {
+export type QueryClientErrorHandler = (error: unknown) => void;
+
+export function isRateLimitError(error: unknown) {
+  return error instanceof ORPCError && error.code === "RATE_LIMITER";
+}
+
+export function createQueryClient(onError?: QueryClientErrorHandler) {
   return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => onError?.(error),
+    }),
+    mutationCache: new MutationCache({
+      onError: (error) => onError?.(error),
+    }),
     defaultOptions: {
       queries: {
         queryKeyHashFn(queryKey) {

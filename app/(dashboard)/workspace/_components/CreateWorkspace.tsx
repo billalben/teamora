@@ -26,7 +26,7 @@ import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { isDefinedError } from "@orpc/client";
 
-export function CreateWorkspace() {
+export function CreateWorkspace({ idPrefix = "create-workspace" }: { idPrefix?: string }) {
   const [openDialog, setDialogOpen] = React.useState(false);
 
   const queryClient = useQueryClient();
@@ -48,9 +48,10 @@ export function CreateWorkspace() {
       },
       onError: (error) => {
         if (isDefinedError(error)) {
-          if (error.code === "RATE_LIMITER") {
-            toast.error("Rate limit exceeded. Please try again later.");
-          } else if (error.code === "FORBIDDEN") {
+          // Rate limits are surfaced globally by the QueryClient error handler.
+          if (error.code === "RATE_LIMITER") return;
+
+          if (error.code === "FORBIDDEN") {
             toast.error("You do not have permission to create a workspace.");
           } else {
             toast.error(error.message);
@@ -82,6 +83,7 @@ export function CreateWorkspace() {
     <Dialog open={openDialog} onOpenChange={handleOpenChange}>
       <Tooltip>
         <TooltipTrigger
+          id={`${idPrefix}-trigger`}
           render={
             <DialogTrigger
               render={

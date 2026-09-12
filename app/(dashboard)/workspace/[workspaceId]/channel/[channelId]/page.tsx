@@ -6,7 +6,7 @@ import { usePanelRef, type PanelSize } from "react-resizable-panels";
 import { useQuery } from "@tanstack/react-query";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useChatLayout } from "@/providers/ChatLayoutProvider";
 import { orpc } from "@/lib/orpc";
 import { ChannelRealtimeProvider } from "@/providers/ChannelRealtimeProvider";
 import { ThreadProvider, useThread } from "@/providers/ThreadProvider";
@@ -21,7 +21,7 @@ const THREAD_WIDTH_KEY = "teamora:chat:thread-width";
 
 function ChannelPageMain({ channelId }: { channelId: string }) {
   const { isThreadOpen } = useThread();
-  const isMobile = useIsMobile();
+  const { isMobile } = useChatLayout();
   const threadPanelRef = usePanelRef();
 
   const { data, isError } = useQuery(

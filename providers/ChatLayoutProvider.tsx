@@ -1,13 +1,13 @@
 "use client";
 
-import * as React from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { usePanelRef, type PanelSize } from "react-resizable-panels";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { writeChatLayoutState, type ChatLayoutState } from "@/lib/chat-layout";
 
 type ChatLayoutContextValue = {
   isMobile: boolean;
@@ -20,85 +20,100 @@ type ChatLayoutContextValue = {
 
 const ChatLayoutContext = React.createContext<ChatLayoutContextValue | undefined>(undefined);
 
-const SIDEBAR_COLLAPSED_KEY = "teamora:chat:channel-sidebar-collapsed";
-const SIDEBAR_WIDTH_KEY = "teamora:chat:channel-sidebar-width";
-const SIDEBAR_DEFAULT_WIDTH = "18rem";
-
-function readStoredWidth() {
-  try {
-    const stored = Number(window.localStorage.getItem(SIDEBAR_WIDTH_KEY));
-    if (stored > 0) return stored;
-  } catch {
-    // Ignore storage failures.
-  }
-  return SIDEBAR_DEFAULT_WIDTH;
-}
-
-export function ChatLayoutProvider({ sidebar, children }: { sidebar: React.ReactNode; children: React.ReactNode }) {
-  const isMobile = useIsMobile();
+export function ChatLayoutProvider({
+  sidebar,
+  children,
+  initialState,
+  hasStoredState,
+}: {
+  sidebar: React.ReactNode;
+  children: React.ReactNode;
+  initialState: ChatLayoutState;
+  hasStoredState: boolean;
+}) {
+  const isMobile = useIsMobile(initialState.isMobile);
   const pathname = usePathname();
 
-  const [isChannelSidebarOpen, setChannelSidebarOpen] = React.useState(false);
-  const [isChannelSidebarCollapsed, setChannelSidebarCollapsed] = useLocalStorage(SIDEBAR_COLLAPSED_KEY, false);
-  const [restored, setRestored] = React.useState(false);
+  const [isChannelSidebarOpen, setChannelSidebarOpen] = useState(false);
+  const [isChannelSidebarCollapsed, setChannelSidebarCollapsed] = useState(initialState.collapsed);
+  const widthRef = useRef(initialState.width);
   const channelPanelRef = usePanelRef();
+  // Ignore resize events that fire before the panel has settled after hydration,
+  // otherwise the initial 0px measurement collapses (and then reopens) the panel.
+  const isPanelReadyRef = useRef(false);
 
-  // Restore persisted state once on mount (keeps SSR output stable).
-  React.useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-      const isTablet = window.matchMedia("(min-width: 768px) and (max-width: 1023px)").matches;
-      if (stored === null && isTablet) {
-        // First visit on a tablet-sized viewport: start collapsed.
-        setChannelSidebarCollapsed(true);
-      }
-    } catch {
-      // Ignore storage failures.
-    }
-    setRestored(true);
-  }, [setChannelSidebarCollapsed]);
+  const isTablet = useIsTablet();
+  const [hasAppliedTabletDefault, setHasAppliedTabletDefault] = useState(false);
+
+  // First visit on a tablet-sized viewport: start collapsed.
+  if (!hasAppliedTabletDefault && isTablet !== null) {
+    setHasAppliedTabletDefault(true);
+    if (!hasStoredState && isTablet) setChannelSidebarCollapsed(true);
+  }
+
+  // Persist the layout state so the server can render the correct state on the
+  // next request (e.g. after a workspace switch reload) without any jump.
+  useEffect(() => {
+    writeChatLayoutState({
+      collapsed: isChannelSidebarCollapsed,
+      width: widthRef.current,
+      isMobile,
+    });
+  }, [isChannelSidebarCollapsed, isMobile]);
 
   // Keep the panel's size in sync with the context state.
-  React.useEffect(() => {
-    if (isMobile || !restored) return;
+  useEffect(() => {
+    if (isMobile) return;
     const panel = channelPanelRef.current;
     if (!panel) return;
 
     if (isChannelSidebarCollapsed) {
       panel.collapse();
     } else {
-      panel.resize(readStoredWidth());
+      panel.resize(widthRef.current);
     }
-  }, [isChannelSidebarCollapsed, isMobile, restored, channelPanelRef]);
+  }, [isChannelSidebarCollapsed, isMobile, channelPanelRef]);
+
+  // Mark the panel as ready only after the initial layout pass has settled so
+  // the first (often 0px) resize event during hydration is ignored.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      isPanelReadyRef.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   // Close the mobile drawer whenever navigation happens.
-  React.useEffect(() => {
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setChannelSidebarOpen(false);
-  }, [pathname]);
+  }
 
-  const handleResize = React.useCallback(
+  const handleResize = useCallback(
     (panelSize: PanelSize) => {
-      if (isMobile || !restored) return;
+      if (isMobile || !isPanelReadyRef.current) return;
 
       const collapsed = panelSize.inPixels <= 0;
       setChannelSidebarCollapsed((previous) => (previous === collapsed ? previous : collapsed));
 
       if (collapsed) return;
-      try {
-        window.localStorage.setItem(SIDEBAR_WIDTH_KEY, String(Math.round(panelSize.inPixels)));
-      } catch {
-        // Ignore storage failures.
-      }
+      widthRef.current = Math.round(panelSize.inPixels);
+      writeChatLayoutState({
+        collapsed: false,
+        width: widthRef.current,
+        isMobile,
+      });
     },
-    [isMobile, restored, setChannelSidebarCollapsed]
+    [isMobile]
   );
 
-  const toggleChannelSidebar = React.useCallback(() => {
+  const toggleChannelSidebar = useCallback(() => {
     if (isMobile) setChannelSidebarOpen((open) => !open);
     else setChannelSidebarCollapsed((collapsed) => !collapsed);
-  }, [isMobile, setChannelSidebarCollapsed]);
+  }, [isMobile]);
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({
       isMobile,
       isChannelSidebarCollapsed,
@@ -107,14 +122,7 @@ export function ChatLayoutProvider({ sidebar, children }: { sidebar: React.React
       setChannelSidebarOpen,
       setChannelSidebarCollapsed,
     }),
-    [
-      isMobile,
-      isChannelSidebarCollapsed,
-      isChannelSidebarOpen,
-      toggleChannelSidebar,
-      setChannelSidebarOpen,
-      setChannelSidebarCollapsed,
-    ]
+    [isMobile, isChannelSidebarCollapsed, isChannelSidebarOpen, toggleChannelSidebar]
   );
 
   if (isMobile) {
@@ -145,7 +153,7 @@ export function ChatLayoutProvider({ sidebar, children }: { sidebar: React.React
           panelRef={channelPanelRef}
           collapsible
           collapsedSize={0}
-          defaultSize={SIDEBAR_DEFAULT_WIDTH}
+          defaultSize={initialState.collapsed ? 0 : `${initialState.width}px`}
           minSize="14rem"
           maxSize="26rem"
           onResize={handleResize}
@@ -164,8 +172,26 @@ export function ChatLayoutProvider({ sidebar, children }: { sidebar: React.React
   );
 }
 
+const TABLET_MEDIA_QUERY = "(min-width: 768px) and (max-width: 1023px)";
+
+function subscribeToTablet(callback: () => void) {
+  const mediaQuery = window.matchMedia(TABLET_MEDIA_QUERY);
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+function getTabletSnapshot() {
+  return window.matchMedia(TABLET_MEDIA_QUERY).matches;
+}
+
+// Returns null until the client has hydrated so the server and first client
+// render agree on the layout, then the actual match after mounting.
+function useIsTablet() {
+  return useSyncExternalStore<boolean | null>(subscribeToTablet, getTabletSnapshot, () => null);
+}
+
 export function useChatLayout() {
-  const context = React.useContext(ChatLayoutContext);
+  const context = useContext(ChatLayoutContext);
   if (!context) {
     throw new Error("useChatLayout must be used within a ChatLayoutProvider");
   }

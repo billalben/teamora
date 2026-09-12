@@ -14,19 +14,20 @@ import {
 import { orpc } from "@/lib/orpc";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs";
 import { PortalLink } from "@kinde-oss/kinde-auth-nextjs/components";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { CreditCard, LogOutIcon, UserIcon } from "lucide-react";
 
-export function UserNav() {
-  const { data, isError } = useSuspenseQuery(orpc.workspace.list.queryOptions());
+export function UserNav({ idPrefix = "user-nav" }: { idPrefix?: string }) {
+  const { data, isPending } = useQuery(orpc.workspace.list.queryOptions());
 
-  if (isError) {
-    return <div>Error loading user data</div>;
+  if (isPending || !data) {
+    return <div className="size-12 animate-pulse rounded-xl bg-background/50" />;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        id={`${idPrefix}-trigger`}
         render={
           <Button
             variant="outline"

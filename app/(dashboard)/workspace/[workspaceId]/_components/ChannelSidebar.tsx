@@ -24,10 +24,10 @@ export function ChannelSidebar() {
           </HydrateClient>
         </div>
 
-        <CreateWorkspace />
+        <CreateWorkspace idPrefix="sidebar" />
 
         <HydrateClient client={queryClient}>
-          <UserNav />
+          <UserNav idPrefix="sidebar" />
         </HydrateClient>
       </div>
 
@@ -40,7 +40,7 @@ export function ChannelSidebar() {
 
       <div className="px-4 py-2">
         {/* Create New Channel */}
-        <CreateNewChannel />
+        <CreateNewChannel idPrefix="sidebar" />
       </div>
 
       {/* Channel List */}

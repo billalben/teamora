@@ -34,7 +34,7 @@ export default async function WorkspaceIdPage({ params }: WorkspaceIdPageProps) 
           <EmptyDescription>No channels available. You can create a new channel to get started.</EmptyDescription>
         </EmptyHeader>
         <EmptyContent className="max-w-xs mx-auto">
-          <CreateNewChannel />
+          <CreateNewChannel idPrefix="empty" />
         </EmptyContent>
       </Empty>
     </div>

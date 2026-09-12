@@ -1,6 +1,8 @@
 import React from "react";
+import { cookies } from "next/headers";
 import { getQueryClient } from "@/lib/query/hydration";
 import { orpc } from "@/lib/orpc";
+import { CHAT_LAYOUT_COOKIE, parseChatLayoutState } from "@/lib/chat-layout";
 import { ChatLayoutProvider } from "@/providers/ChatLayoutProvider";
 
 import { ChannelSidebar } from "./_components/ChannelSidebar";
@@ -10,5 +12,17 @@ export default async function ChannelListLayout({ children }: { children: React.
 
   await queryClient.prefetchQuery(orpc.channel.list.queryOptions());
 
-  return <ChatLayoutProvider sidebar={<ChannelSidebar />}>{children}</ChatLayoutProvider>;
+  const cookieStore = await cookies();
+  const storedChatLayout = cookieStore.get(CHAT_LAYOUT_COOKIE)?.value;
+  const initialChatLayout = parseChatLayoutState(storedChatLayout);
+
+  return (
+    <ChatLayoutProvider
+      sidebar={<ChannelSidebar />}
+      initialState={initialChatLayout}
+      hasStoredState={storedChatLayout !== undefined}
+    >
+      {children}
+    </ChatLayoutProvider>
+  );
 }

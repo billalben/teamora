@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { isDefinedError } from "@orpc/client";
 import { useParams, useRouter } from "next/navigation";
 
-export function CreateNewChannel() {
+export function CreateNewChannel({ idPrefix = "create-channel" }: { idPrefix?: string }) {
   const queryClient = useQueryClient();
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -51,7 +51,10 @@ export function CreateNewChannel() {
       },
       onError: (error) => {
         if (isDefinedError(error)) {
-          toast.error(error.message);
+          // Rate limits are surfaced globally by the QueryClient error handler.
+          if (error.code !== "RATE_LIMITER") {
+            toast.error(error.message);
+          }
         } else {
           toast.error("Failed to create channel due to an unexpected error.");
         }
@@ -76,6 +79,7 @@ export function CreateNewChannel() {
   return (
     <Dialog open={openDialog} onOpenChange={handleModalChange}>
       <DialogTrigger
+        id={`${idPrefix}-trigger`}
         render={
           <Button variant="outline" className="w-full">
             <PlusIcon className="size-4" />

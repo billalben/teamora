@@ -11,7 +11,6 @@ import { heavyWriteSecurityMiddleware } from "../middlewares/arcjet/heavy-write"
 
 export const listWorkspaces = base
   .use(requiredAuthMiddleware)
-  .use(requiredWorspaceMiddleware)
   .route({
     method: "GET",
     path: "/workspace",
@@ -30,26 +29,30 @@ export const listWorkspaces = base
         })
       ),
       user: z.custom<KindeUser<Record<string, unknown>>>(),
-      currentWorkspace: z.custom<KindeOrganization<unknown>>(),
+      currentWorkspace: z.custom<KindeOrganization<unknown>>().nullable(),
     })
   )
   .handler(async ({ context, errors }) => {
-    const { getUserOrganizations } = getKindeServerSession();
+    const { getUserOrganizations, getOrganization } = getKindeServerSession();
 
-    const organazations = await getUserOrganizations();
+    const [organizations, organization] = await Promise.all([getUserOrganizations(), getOrganization()]);
 
-    if (!organazations) {
+    if (!organizations) {
       throw errors.FORBIDDEN();
     }
 
     return {
-      workspaces: organazations?.orgs.map((org) => ({
-        id: org.code,
-        name: org.name ?? "Unnamed Workspace",
-        avatar: org.name?.charAt(0).toUpperCase() ?? "U",
-      })),
+      // Keep a stable, predictable order across workspace switches.
+      workspaces: [...organizations.orgs]
+        .map((org) => ({
+          id: org.code,
+          name: org.name ?? "Unnamed Workspace",
+          avatar: org.name?.charAt(0).toUpperCase() ?? "U",
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) || a.id.localeCompare(b.id)),
       user: context.user,
-      currentWorkspace: context.workspace,
+      // May be null while the active organization is still settling (e.g. right after a switch).
+      currentWorkspace: organization ?? null,
     };
   });
 
