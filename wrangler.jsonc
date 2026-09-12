@@ -1,0 +1,25 @@
+{
+  "name": "teamora-chat-realtime-app",
+  "main": "realtime/index.ts",
+  "compatibility_date": "2026-09-10",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "Chat",
+        "class_name": "Chat"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1", // Should be unique for each entry
+      "new_sqlite_classes": ["Chat"]
+    }
+  ]
+}
+
+/**
+  📖 Read about runtime types
+  https://developers.cloudflare.com/workers/languages/typescript/#generate-types
+  📣 Remember to rerun 'wrangler types' after you change your wrangler.jsonc file.
+*/

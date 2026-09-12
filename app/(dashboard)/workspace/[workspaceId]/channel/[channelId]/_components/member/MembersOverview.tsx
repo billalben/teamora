@@ -6,9 +6,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { orpc } from "@/lib/orpc";
 import { useQuery } from "@tanstack/react-query";
 import { SearchIcon, UsersIcon } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import MemberItem from "./MemberItem";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useParams } from "next/navigation";
+import { usePresence } from "@/hooks/use-presence";
+import { User } from "@/app/schemas/realtime";
 
 export default function MembersOverview() {
   const [searchMember, setSearchMember] = useState("");
@@ -32,6 +35,30 @@ export default function MembersOverview() {
         return name?.includes(trimLowercaseMemberSearch) || email?.includes(trimLowercaseMemberSearch);
       })
     : members;
+
+  const { data: workspaceData } = useQuery(orpc.workspace.list.queryOptions());
+
+  const currentUser = workspaceData?.user
+    ? ({
+        id: workspaceData.user.id,
+        email: workspaceData.user.email,
+        full_name: workspaceData.user.given_name,
+        picture: workspaceData.user.picture,
+      } satisfies User)
+    : null;
+
+  const params = useParams();
+
+  const workspaceId = params.workspaceId;
+
+  const { onlineUsers } = usePresence({
+    room: `workspace-${workspaceId}`,
+    currentUser: currentUser,
+  });
+
+  const onlineUsersIds = useMemo(() => {
+    return new Set(onlineUsers.map((user) => user.id));
+  }, [onlineUsers]);
 
   if (isError) {
     return <p>error</p>;
@@ -71,7 +98,11 @@ export default function MembersOverview() {
           {/* Members */}
           <div className="max-h-80 overflow-y-auto">
             {filteredMembers?.map((member) => (
-              <MemberItem key={member.id} member={member} />
+              <MemberItem
+                key={member.id}
+                member={member}
+                isOnline={member?.id ? onlineUsersIds.has(member.id) : false}
+              />
             ))}
           </div>
         </div>
