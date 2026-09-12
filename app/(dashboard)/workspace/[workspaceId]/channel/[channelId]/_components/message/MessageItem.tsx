@@ -2,8 +2,8 @@
 
 import { SafeContent } from "@/components/rich-text-editor/SafeContent";
 import { AttachmentImage } from "@/components/ui/attachment-image";
-import { Message } from "@/lib/generated/prisma/client";
 import { getAvatar } from "@/lib/getAvatar";
+import type { MessageWithCount } from "@/lib/query/message-cache";
 import Image from "next/image";
 import { MessageHoverToolbar } from "../toolbar";
 import { useMemo, useState } from "react";
@@ -13,11 +13,6 @@ import { MessageSquareIcon } from "lucide-react";
 import { useThread } from "@/providers/ThreadProvider";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
-
-export type MessageWithCount = Message & {
-  _count: { replies: number };
-  messageReactions: { emoji: string; userId: string }[];
-};
 
 type TProps = {
   message: MessageWithCount;

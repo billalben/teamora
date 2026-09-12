@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EmojiReaction } from "./EmojiReaction";
 import { orpc } from "@/lib/orpc";
+import { patchMessageReactions } from "@/lib/query/message-cache";
+import { useChannelRealtime } from "@/providers/ChannelRealtimeProvider";
 import { toast } from "sonner";
 import { GroupReactionSchemaType } from "@/app/schemas/message";
 import { Button } from "@/components/ui/button";
@@ -14,27 +16,19 @@ interface iAppProps {
   context: { type: "thread" | "channel"; threadId: string };
 }
 
-export function ReactionsBar({ messageId, reactions, context }: iAppProps) {
+export function ReactionsBar({ messageId, reactions }: iAppProps) {
   const queryClient = useQueryClient();
+  const { send } = useChannelRealtime();
 
   const toggleReactionMutation = useMutation(
     orpc.message.reaction.toggle.mutationOptions({
-      onSuccess: () => {
-        // Refresh the channel message list (covers main messages and the
-        // parent of any open thread, since it shows reply counts).
-        queryClient.invalidateQueries({
-          queryKey: orpc.message.list.key(),
-        });
+      onSuccess: (data) => {
+        patchMessageReactions(queryClient, data.messageId, data.messageReactions);
 
-        // When toggling a reaction inside a thread sidebar, also refresh
-        // the thread query so the sidebar (parent + replies) updates.
-        if (context.type === "thread") {
-          queryClient.invalidateQueries({
-            queryKey: orpc.message.thread.list.key({
-              input: { messageId: context.threadId },
-            }),
-          });
-        }
+        send({
+          type: "reaction:updated",
+          payload: { messageId: data.messageId, messageReactions: data.messageReactions },
+        });
 
         toast.success("Reaction added");
       },

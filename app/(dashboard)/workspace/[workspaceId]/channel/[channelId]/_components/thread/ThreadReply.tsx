@@ -2,7 +2,7 @@ import { SafeContent } from "@/components/rich-text-editor/SafeContent";
 import Image from "next/image";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
-import { MessageWithCount } from "../message/MessageItem";
+import { MessageWithCount } from "@/lib/query/message-cache";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
 
 interface ThreadReplyProps {

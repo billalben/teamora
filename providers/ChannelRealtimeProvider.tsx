@@ -1,6 +1,12 @@
 import { ChannelEvent, ChannelEventSchema } from "@/app/schemas/realtime";
-import { InfiniteMessages, messageListInfiniteKey } from "@/lib/query/message-keys";
-import { orpc } from "@/lib/orpc";
+import {
+  appendThreadReply,
+  incrementReplyCount,
+  patchMessageReactions,
+  replaceChannelMessage,
+  replaceThreadMessage,
+  upsertChannelMessage,
+} from "@/lib/query/message-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import usePartySocket from "partysocket/react";
 import { createContext, ReactNode, useContext, useMemo } from "react";
@@ -40,32 +46,11 @@ export function ChannelRealtimeProvider({ channelId, children }: ChannelRealtime
         if (evt.type === "message:created") {
           const raw = evt.payload.message;
 
-          // insert at top of first page of infinite list for the channnel
-          queryClient.setQueryData<InfiniteMessages>(messageListInfiniteKey(channelId), (old) => {
-            if (!old) {
-              return {
-                pages: [{ items: [raw], nextCursor: null }],
-                pageParams: [undefined],
-              };
-            }
-
-            // the sender may already have this message from an optimistic update
-            if (old.pages.some((page) => page.items.some((message) => message.id === raw.id))) {
-              return old;
-            }
-
-            const first = old.pages[0];
-
-            const updatedFirst = {
-              ...first,
-              items: [raw, ...first.items],
-            };
-
-            return {
-              ...old,
-              pages: [updatedFirst, ...old.pages.slice(1)],
-            };
-          });
+          if (raw.threadId) {
+            appendThreadReply(queryClient, raw.threadId, raw);
+          } else {
+            upsertChannelMessage(queryClient, channelId, raw);
+          }
 
           return;
         }
@@ -73,27 +58,20 @@ export function ChannelRealtimeProvider({ channelId, children }: ChannelRealtime
         if (evt.type === "message:updated") {
           const raw = evt.payload.message;
 
-          queryClient.setQueryData<InfiniteMessages>(messageListInfiniteKey(channelId), (old) => {
-            if (!old) return old;
+          replaceChannelMessage(queryClient, channelId, raw);
+          replaceThreadMessage(queryClient, raw);
 
-            let changed = false;
+          return;
+        }
 
-            const pages = old.pages.map((page) => ({
-              ...page,
-              items: page.items.map((item) => {
-                if (item.id !== raw.id) return item;
+        if (evt.type === "reaction:updated") {
+          patchMessageReactions(queryClient, evt.payload.messageId, evt.payload.messageReactions);
 
-                changed = true;
-                // merge so realtime-stripped fields (messageReactions, _count) survive
-                return { ...item, ...raw };
-              }),
-            }));
+          return;
+        }
 
-            return changed ? { ...old, pages } : old;
-          });
-
-          // the edited message may be the parent of an open thread sidebar
-          queryClient.invalidateQueries({ queryKey: orpc.message.thread.list.key() });
+        if (evt.type === "message:replies:increment") {
+          incrementReplyCount(queryClient, evt.payload.messageId, evt.payload.delta);
 
           return;
         }

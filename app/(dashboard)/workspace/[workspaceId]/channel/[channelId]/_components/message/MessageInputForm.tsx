@@ -58,7 +58,8 @@ export function MessageInputForm({ channelId, user }: IAppProps) {
           authorAvatarUrl: getAvatar({ email: user?.email, picture: user?.picture }),
           channelId: variables.channelId,
           threadId: variables.threadId ?? null,
-          reactions: [],
+          messageReactions: [],
+          _count: { replies: 0 },
         };
 
         queryClient.setQueryData<InfiniteMessages>(queryKey, (old) => {

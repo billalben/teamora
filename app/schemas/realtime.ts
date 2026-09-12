@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { groupReactionSchema } from "@/app/schemas/message";
-
 export const UserSchema = z.object({
   id: z.string(),
   full_name: z.string().nullable(),
@@ -44,7 +42,8 @@ export const RealtimeMessageSchema = z.object({
   channelId: z.string().nullable(),
   threadId: z.string().optional().nullable(),
 
-  reactions: z.array(groupReactionSchema).optional(),
+  messageReactions: z.array(z.object({ emoji: z.string(), userId: z.string() })).optional(),
+  _count: z.object({ replies: z.number() }).optional(),
   replyCount: z.number().optional(),
 });
 
@@ -64,7 +63,7 @@ export const ChannelEventSchema = z.union([
     type: z.literal("reaction:updated"),
     payload: z.object({
       messageId: z.string(),
-      reactions: z.array(groupReactionSchema),
+      messageReactions: z.array(z.object({ emoji: z.string(), userId: z.string() })),
     }),
   }),
   z.object({

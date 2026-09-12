@@ -8,8 +8,10 @@ import { Controller, useForm } from "react-hook-form";
 import { MessageComposer } from "../message/MessageComposer";
 import { useAttachmentUpload } from "@/hooks/use-attachement-upload";
 import { useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
+import { appendThreadReply } from "@/lib/query/message-cache";
+import { useChannelRealtime } from "@/providers/ChannelRealtimeProvider";
 import { toast } from "sonner";
 
 interface IAppProps {
@@ -22,6 +24,9 @@ export default function ThreadReplyForm({ threadId }: IAppProps) {
 
   const upload = useAttachmentUpload();
   const [editorKey, setEditorKey] = useState(0);
+
+  const queryClient = useQueryClient();
+  const { send } = useChannelRealtime();
 
   const form = useForm({
     resolver: zodResolver(createMessageSchema),
@@ -38,7 +43,7 @@ export default function ThreadReplyForm({ threadId }: IAppProps) {
 
   const createMessageMutation = useMutation(
     orpc.message.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (data) => {
         form.reset({
           content: "",
           channelId,
@@ -47,12 +52,16 @@ export default function ThreadReplyForm({ threadId }: IAppProps) {
         upload.clearStagedAttachment();
         setEditorKey((prev) => prev + 1);
 
+        appendThreadReply(queryClient, threadId, data);
+
+        send({ type: "message:created", payload: { message: data } });
+        send({ type: "message:replies:increment", payload: { messageId: threadId, delta: 1 } });
+
         toast.success("Message sent successfully!");
       },
       onError: () => {
         toast.error("Failed to send message. Please try again.");
       },
-      onSettled: () => {},
     })
   );
 

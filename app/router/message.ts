@@ -5,13 +5,7 @@ import { requiredAuthMiddleware } from "../middlewares/auth";
 import { base } from "../middlewares/base";
 import { requiredWorspaceMiddleware } from "../middlewares/workspace";
 import prisma from "@/lib/prisma";
-import {
-  createMessageSchema,
-  groupReactionSchema,
-  GroupReactionSchemaType,
-  toggleMessageReactionSchema,
-  updateMessageSchema,
-} from "../schemas/message";
+import { createMessageSchema, toggleMessageReactionSchema, updateMessageSchema } from "../schemas/message";
 import { getAvatar } from "@/lib/getAvatar";
 import { Message } from "@/lib/generated/prisma/client";
 import { readSecurityMiddleware } from "../middlewares/arcjet/read";
@@ -234,30 +228,6 @@ export const listThreadReplies = base
     };
   });
 
-function groupReactions(reactions: { emoji: string; userId: string }[], userId: string): GroupReactionSchemaType[] {
-  const reactionMap = new Map<string, { count: number; reactedByMe: boolean }>();
-
-  for (const reaction of reactions) {
-    const existing = reactionMap.get(reaction.emoji);
-
-    if (existing) {
-      existing.count++;
-
-      if (reaction.userId === userId) {
-        existing.reactedByMe = true;
-      }
-    } else {
-      reactionMap.set(reaction.emoji, { count: 1, reactedByMe: reaction.userId === userId });
-    }
-  }
-
-  return Array.from(reactionMap.entries()).map(([emoji, { count, reactedByMe }]) => ({
-    emoji,
-    count,
-    reactedByMe,
-  }));
-}
-
 export const toggleMessageReaction = base
   .use(requiredAuthMiddleware)
   .use(requiredWorspaceMiddleware)
@@ -274,7 +244,7 @@ export const toggleMessageReaction = base
   .output(
     z.object({
       messageId: z.string(),
-      reactions: z.array(groupReactionSchema),
+      messageReactions: z.array(z.object({ emoji: z.string(), userId: z.string() })),
     })
   )
   .handler(async ({ input, context, errors }) => {
@@ -328,9 +298,6 @@ export const toggleMessageReaction = base
 
     return {
       messageId: updated.id,
-      reactions: groupReactions(
-        (updated.messageReactions ?? []).map((r) => ({ emoji: r.emoji, userId: r.userId })),
-        context.user.id
-      ),
+      messageReactions: (updated.messageReactions ?? []).map((r) => ({ emoji: r.emoji, userId: r.userId })),
     };
   });
