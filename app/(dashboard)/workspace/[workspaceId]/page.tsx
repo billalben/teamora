@@ -2,6 +2,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { client } from "@/lib/orpc";
 import { AntennaIcon } from "lucide-react";
 import { redirect } from "next/navigation";
+import { ChannelsTrigger } from "./_components/ChannelsTrigger";
 import { CreateNewChannel } from "./_components/CreateNewChannel";
 
 type WorkspaceIdPageProps = {
@@ -17,7 +18,11 @@ export default async function WorkspaceIdPage({ params }: WorkspaceIdPageProps) 
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-6">
+    <div className="relative flex h-full w-full items-center justify-center p-6">
+      <div className="absolute top-3 left-3 md:hidden">
+        <ChannelsTrigger />
+      </div>
+
       <Empty className="from-muted/50 to-background h-full bg-linear-to-b from-30%">
         <EmptyHeader>
           <EmptyMedia variant="default">

@@ -13,8 +13,8 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   await queryClient.prefetchQuery(orpc.workspace.list.queryOptions());
 
   return (
-    <div className="flex w-full h-screen">
-      <div className="flex h-full w-16 gap-3 flex-col items-center bg-secondary py-3 px-2 border-r border-border">
+    <div className="flex h-dvh w-full overflow-hidden">
+      <div className="hidden h-full w-16 flex-col items-center gap-3 border-r border-border bg-secondary px-2 py-3 md:flex">
         <HydrateClient client={queryClient}>
           <WorkspaceList />
         </HydrateClient>
@@ -28,7 +28,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
         </HydrateClient>
       </div>
 
-      <div className="flex-1 overflow-auto">{children}</div>
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</div>
 
       {/* dev tanstack */}
       <ReactQueryDevtools initialIsOpen={false} />

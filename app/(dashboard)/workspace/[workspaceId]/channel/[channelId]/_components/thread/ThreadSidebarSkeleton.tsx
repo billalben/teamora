@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function ThreadSidebarSkeleton() {
   return (
-    <div className="w-120 border-l flex flex-col h-full">
+    <div className="flex h-full min-h-0 w-full flex-col bg-background">
       {/* Header */}
       <div className="border-b h-14 px-4 flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
 import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
-export function WorkspaceList() {
+export function WorkspaceList({ orientation = "vertical" }: { orientation?: "vertical" | "horizontal" }) {
   const { data, isError } = useSuspenseQuery(orpc.workspace.list.queryOptions());
+  const isHorizontal = orientation === "horizontal";
 
   const colorCominations = [
     "bg-blue-500 hover:bg-blue-600 text-white",
@@ -48,7 +49,7 @@ export function WorkspaceList() {
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex gap-2", isHorizontal ? "flex-row items-center" : "flex-col")}>
       {data.workspaces.map((workspace) => {
         const isActive = data.currentWorkspace.orgCode === workspace.id;
 
@@ -65,7 +66,7 @@ export function WorkspaceList() {
               }
             />
 
-            <TooltipContent side="right">
+            <TooltipContent side={isHorizontal ? "bottom" : "right"}>
               <p>
                 {workspace.name} {isActive && "(Current)"}
               </p>

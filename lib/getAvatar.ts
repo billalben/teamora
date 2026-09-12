@@ -1,3 +1,6 @@
 export function getAvatar({ picture, email }: { picture?: string | null; email?: string | null }) {
-  return picture ?? `https://avatar.vercel.sh/${email ?? "user"}`;
+  const normalizedPicture = picture?.trim();
+  if (normalizedPicture) return normalizedPicture;
+
+  return `https://avatar.vercel.sh/${email?.trim() || "user"}`;
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/user-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getAvatar } from "@/lib/getAvatar";
 import { orpc } from "@/lib/orpc";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs";
 import { PortalLink } from "@kinde-oss/kinde-auth-nextjs/components";
@@ -34,15 +33,7 @@ export function UserNav() {
             size="icon"
             className="size-12 rounded-xl hover:rounded-lg transition-all duration-200 bg-background/50 border-border/50 hover:bg-accent hover:text-accent-foreground"
           >
-            <Avatar>
-              <AvatarImage
-                src={getAvatar({ picture: data.user.picture, email: data.user.email })}
-                alt="User Avatar"
-                className="object-cover"
-              />
-
-              <AvatarFallback className="uppercase">{data.user.given_name?.slice(0, 2) || ""}</AvatarFallback>
-            </Avatar>
+            <UserAvatar picture={data.user.picture} email={data.user.email} name={data.user.given_name} />
           </Button>
         }
       />
@@ -50,15 +41,7 @@ export function UserNav() {
       <DropdownMenuContent align="end" side="right" sideOffset={8} className="w-52">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="flex items-center gap-3">
-            <Avatar className="size-8">
-              <AvatarImage
-                src={getAvatar({ picture: data.user.picture, email: data.user.email })}
-                alt="User Avatar"
-                className="object-cover"
-              />
-              <AvatarFallback className="uppercase">{data.user.given_name?.slice(0, 2) || ""}</AvatarFallback>
-            </Avatar>
-
+            <UserAvatar picture={data.user.picture} email={data.user.email} name={data.user.given_name} />
             <div className="grid flex-1 text-left text-sm leading-tight">
               <p className="truncate font-medium">{data.user.given_name}</p>
               <p className="text-xs truncate text-muted-foreground">{data.user.email}</p>

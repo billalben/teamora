@@ -1,6 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { getAvatar } from "@/lib/getAvatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 import { organization_user } from "@kinde/management-api-js";
 
@@ -16,20 +15,12 @@ export function MemberItem({ member, isOnline }: MemberItemProps) {
     <div className="px-3 py-2 hover:bg-accent cursor-pointer transition-colors">
       <div className="flex items-center space-x-3">
         <div className="relative">
-          <Avatar className="size-8">
-            <AvatarImage
-              src={getAvatar({ picture: member.picture, email: member.email })}
-              className="object-cover"
-              alt="Member avatar"
-            />
-
-            <AvatarFallback>{member.full_name?.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <UserAvatar className="size-8" picture={member.picture} email={member.email} name={member.full_name} />
 
           {/* online/offline status indicator */}
           <div
             className={cn(
-              "absolute bottom-0 right-0 size-3 rounded-full border border-background",
+              "absolute right-0 bottom-0 size-3 rounded-full border border-background",
               isOnline ? "bg-green-500" : "bg-gray-400"
             )}
           ></div>
