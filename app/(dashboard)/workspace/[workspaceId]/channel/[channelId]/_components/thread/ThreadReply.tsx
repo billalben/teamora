@@ -10,6 +10,7 @@ import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
 import { isMessageEdited } from "@/lib/utils";
 import { MessageHoverToolbar } from "../toolbar";
 import { EditMessage } from "../toolbar/EditMessage";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 
 type ThreadReplyProps = {
   message: MessageWithCount;
@@ -54,13 +55,15 @@ export const ThreadReply = memo(function ThreadReply({ message, selectedThreadId
             />
 
             {message.imageUrl && (
-              <Image
-                src={message.imageUrl}
-                alt={message.content}
-                width={512}
-                height={512}
-                className="rounded-md object-contain max-h-96 w-auto"
-              />
+              <ImageLightbox src={message.imageUrl} alt={message.content}>
+                <Image
+                  src={message.imageUrl}
+                  alt={message.content}
+                  width={512}
+                  height={512}
+                  className="rounded-md object-contain max-h-96 w-auto"
+                />
+              </ImageLightbox>
             )}
 
             <ReactionsBar

@@ -19,3 +19,16 @@ function isUploadThingFileUrl(src: string): boolean {
 export function shouldUseNativeImage(src: string, fileName?: string): boolean {
   return isUploadThingFileUrl(src) || isSvgImageSource(src, fileName);
 }
+
+/** Returns the UploadThing file key embedded in a `<app>.ufs.sh/f/<key>` URL, or null. */
+export function getUploadThingFileKey(src: string): string | null {
+  try {
+    const url = new URL(src);
+    if (!url.hostname.endsWith(".ufs.sh")) return null;
+
+    const match = url.pathname.match(/^\/f\/(.+)$/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
+  }
+}

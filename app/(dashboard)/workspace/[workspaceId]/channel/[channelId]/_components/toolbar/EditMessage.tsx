@@ -14,6 +14,8 @@ import { useChannelRealtime } from "@/providers/ChannelRealtimeProvider";
 import { toast } from "sonner";
 import { Message } from "@/lib/generated/prisma/client";
 import { Loader2Icon } from "lucide-react";
+import { useState } from "react";
+import { AttachmentChip } from "../message/AttachmentChip";
 
 type EditMessageProps = {
   message: Message;
@@ -24,6 +26,7 @@ type EditMessageProps = {
 export function EditMessage({ message, onCancel, onSave }: EditMessageProps) {
   const queryClient = useQueryClient();
   const { sendEvent } = useChannelRealtime();
+  const [imageRemoved, setImageRemoved] = useState(false);
 
   const form = useForm<UpdateMessageSchemaType>({
     resolver: zodResolver(updateMessageSchema),
@@ -51,11 +54,13 @@ export function EditMessage({ message, onCancel, onSave }: EditMessageProps) {
         updateChannelMessage(queryClient, message.channelId, message.id, (current) => ({
           ...current,
           content: variables.content,
+          ...(variables.imageUrl !== undefined ? { imageUrl: variables.imageUrl } : {}),
           updatedAt,
         }));
         updateThreadMessage(queryClient, message.threadId ?? message.id, message.id, (current) => ({
           ...current,
           content: variables.content,
+          ...(variables.imageUrl !== undefined ? { imageUrl: variables.imageUrl } : {}),
           updatedAt,
         }));
 
@@ -101,7 +106,10 @@ export function EditMessage({ message, onCancel, onSave }: EditMessageProps) {
   );
 
   const onSubmit = (data: UpdateMessageSchemaType) => {
-    updateMessageMutation.mutate(data);
+    updateMessageMutation.mutate({
+      ...data,
+      ...(message.imageUrl && imageRemoved ? { imageUrl: null } : {}),
+    });
   };
 
   return (
@@ -114,6 +122,11 @@ export function EditMessage({ message, onCancel, onSave }: EditMessageProps) {
             <Field data-invalid={!!fieldState.error}>
               <RichTextEditor
                 field={field}
+                footerLeft={
+                  message.imageUrl && !imageRemoved ? (
+                    <AttachmentChip url={message.imageUrl} onRemoveImage={() => setImageRemoved(true)} />
+                  ) : undefined
+                }
                 sendButton={
                   <div className="flex items-center gap-2">
                     <Button

@@ -7,6 +7,8 @@ import { requiredWorspaceMiddleware } from "../middlewares/workspace";
 import { prisma } from "@/lib/prisma";
 import { createMessageSchema, toggleMessageReactionSchema, updateMessageSchema } from "../schemas/message";
 import { getAvatar } from "@/lib/getAvatar";
+import { getUploadThingFileKey } from "@/lib/image";
+import { utapi } from "@/lib/uploadthing-server";
 import { Message } from "@/lib/generated/prisma/client";
 import { readSecurityMiddleware } from "../middlewares/arcjet/read";
 
@@ -156,7 +158,7 @@ export const updateMessage = base
   .handler(async ({ input, context, errors }) => {
     const message = await prisma.message.findUnique({
       where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
-      select: { id: true, authorId: true },
+      select: { id: true, authorId: true, imageUrl: true },
     });
 
     if (!message) {
@@ -167,13 +169,31 @@ export const updateMessage = base
       throw errors.FORBIDDEN(); // user is not the author of the message
     }
 
+    const previousImageUrl = message.imageUrl;
+    const nextImageUrl = input.imageUrl === undefined ? previousImageUrl : input.imageUrl;
+
     const updated = await prisma.message.update({
       where: { id: input.messageId },
-      data: { content: input.content },
+      data: {
+        content: input.content,
+        ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
+      },
       include: {
         messageReactions: { select: { emoji: true, userId: true } },
       },
     });
+
+    if (previousImageUrl && previousImageUrl !== nextImageUrl) {
+      const fileKey = getUploadThingFileKey(previousImageUrl);
+
+      if (fileKey) {
+        try {
+          await utapi.deleteFiles(fileKey);
+        } catch {
+          // best-effort cleanup; the message update already succeeded
+        }
+      }
+    }
 
     return {
       message: updated,

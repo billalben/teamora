@@ -10,6 +10,7 @@ export const createMessageSchema = z.object({
 export const updateMessageSchema = z.object({
   messageId: z.string(),
   content: z.string().min(1, { message: "Message content cannot be empty" }),
+  imageUrl: z.url().nullish(),
 });
 
 export const toggleMessageReactionSchema = z.object({

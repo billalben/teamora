@@ -14,6 +14,7 @@ import { useThread } from "@/providers/ThreadProvider";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
 import { isMessageEdited } from "@/lib/utils";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 
 type MessageItemProps = {
   message: MessageWithCount;
@@ -78,13 +79,15 @@ export const MessageItem = memo(function MessageItem({ message, user }: MessageI
 
             {message.imageUrl && (
               <div className="mt-3">
-                <AttachmentImage
-                  src={message.imageUrl}
-                  alt="Attachment"
-                  width={512}
-                  height={512}
-                  className="rounded-md object-cover max-h-80 w-auto max-w-full"
-                />
+                <ImageLightbox src={message.imageUrl} alt="Attachment">
+                  <AttachmentImage
+                    src={message.imageUrl}
+                    alt="Attachment"
+                    width={512}
+                    height={512}
+                    className="rounded-md object-cover max-h-80 w-auto max-w-full"
+                  />
+                </ImageLightbox>
               </div>
             )}
 
