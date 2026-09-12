@@ -33,8 +33,9 @@ model Message {
   content  String
   imageUrl String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Foreign keys
   authorId        String // Kinde user id

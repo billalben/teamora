@@ -34,6 +34,7 @@ export function buildOptimisticMessage(input: OptimisticMessageInput): MessageWi
     imageUrl: input.imageUrl ?? null,
     createdAt: now,
     updatedAt: now,
+    deletedAt: null,
     authorId: input.authorId,
     authorEmail: input.authorEmail ?? "",
     authorName: input.authorName ?? "unknown",
@@ -52,6 +53,7 @@ function toMessageWithCount(message: RealtimeMessage): MessageWithCount {
     imageUrl: message.imageUrl ?? null,
     createdAt: new Date(message.createdAt),
     updatedAt: new Date(message.updatedAt),
+    deletedAt: message.deletedAt ?? null,
     authorEmail: message.authorEmail ?? "",
     authorName: message.authorName ?? "unknown",
     authorAvatarUrl: message.authorAvatarUrl ?? null,
@@ -265,4 +267,35 @@ export function incrementReplyCount(queryClient: QueryClient, channelId: string,
     ...message,
     _count: { replies: Math.max(0, (message._count?.replies ?? 0) + delta) },
   }));
+}
+
+export function setMessageDeleted(
+  queryClient: QueryClient,
+  { channelId, threadId, messageId }: { channelId: string; threadId: string | null; messageId: string }
+) {
+  updateChannelMessage(queryClient, channelId, messageId, (message) => ({
+    ...message,
+    deletedAt: new Date(),
+    imageUrl: null,
+  }));
+
+  updateThreadMessage(queryClient, threadId ?? messageId, messageId, (message) => ({
+    ...message,
+    deletedAt: new Date(),
+    imageUrl: null,
+  }));
+}
+
+export function setMessageRestored(
+  queryClient: QueryClient,
+  { channelId, threadId, message }: { channelId: string; threadId: string | null; message: RealtimeMessage }
+) {
+  updateChannelMessage(queryClient, channelId, message.id, (current) => ({ ...current, ...message }));
+
+  updateThreadMessage(
+    queryClient,
+    threadId ?? message.id,
+    message.id,
+    (current) => ({ ...current, ...message }) as MessageWithCount
+  );
 }

@@ -11,6 +11,7 @@ import { isMessageEdited } from "@/lib/utils";
 import { MessageHoverToolbar } from "../toolbar";
 import { EditMessage } from "../toolbar/EditMessage";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { DeletedMessagePlaceholder } from "../message/DeletedMessagePlaceholder";
 
 type ThreadReplyProps = {
   message: MessageWithCount;
@@ -45,7 +46,9 @@ export const ThreadReply = memo(function ThreadReply({ message, selectedThreadId
           </span>
         </div>
 
-        {isEditing ? (
+        {message.deletedAt ? (
+          <DeletedMessagePlaceholder message={message} canUndo={canEdit} />
+        ) : isEditing ? (
           <EditMessage message={message} onCancel={() => setIsEditing(false)} onSave={() => setIsEditing(false)} />
         ) : (
           <>
@@ -76,7 +79,7 @@ export const ThreadReply = memo(function ThreadReply({ message, selectedThreadId
         )}
       </div>
 
-      <MessageHoverToolbar messageId={message.id} canEdit={canEdit} onEdit={handleEdit} showThreadButton={false} />
+      <MessageHoverToolbar message={message} canEdit={canEdit} onEdit={handleEdit} showThreadButton={false} />
     </div>
   );
 });

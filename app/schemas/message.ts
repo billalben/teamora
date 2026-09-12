@@ -13,6 +13,10 @@ export const updateMessageSchema = z.object({
   imageUrl: z.url().nullish(),
 });
 
+export const messageIdSchema = z.object({
+  messageId: z.string(),
+});
+
 export const toggleMessageReactionSchema = z.object({
   messageId: z.string(),
   emoji: z.string().min(1, { message: "Emoji is required" }),
@@ -26,5 +30,6 @@ export const groupReactionSchema = z.object({
 
 export type CreateMessageSchemaType = z.infer<typeof createMessageSchema>;
 export type UpdateMessageSchemaType = z.infer<typeof updateMessageSchema>;
+export type MessageIdSchemaType = z.infer<typeof messageIdSchema>;
 export type ToggleMessageReactionSchemaType = z.infer<typeof toggleMessageReactionSchema>;
 export type GroupReactionSchemaType = z.infer<typeof groupReactionSchema>;

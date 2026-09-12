@@ -12,6 +12,7 @@ import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
 import { SummarizeThread } from "./SummarizeThread";
 import { isMessageEdited } from "@/lib/utils";
+import { DeletedMessagePlaceholder } from "../message/DeletedMessagePlaceholder";
 
 export function ThreadSidebarContent() {
   const { selectedThreadId, closeThread } = useThread();
@@ -78,17 +79,26 @@ export function ThreadSidebarContent() {
                   </span>
                 </div>
 
-                <SafeContent
-                  className="text-sm text-muted-foreground"
-                  content={JSON.parse(threadData.parent.content)}
-                />
+                {threadData.parent.deletedAt ? (
+                  <DeletedMessagePlaceholder
+                    message={threadData.parent}
+                    canUndo={user.id === threadData.parent.authorId}
+                  />
+                ) : (
+                  <>
+                    <SafeContent
+                      className="text-sm text-muted-foreground"
+                      content={JSON.parse(threadData.parent.content)}
+                    />
 
-                <ReactionsBar
-                  context={{ type: "thread", threadId: threadData.parent.id }}
-                  messageId={threadData.parent.id}
-                  userId={user.id}
-                  reactions={parentReactions}
-                />
+                    <ReactionsBar
+                      context={{ type: "thread", threadId: threadData.parent.id }}
+                      messageId={threadData.parent.id}
+                      userId={user.id}
+                      reactions={parentReactions}
+                    />
+                  </>
+                )}
               </div>
             </div>
 

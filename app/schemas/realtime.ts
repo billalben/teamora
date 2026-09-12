@@ -40,6 +40,7 @@ export const RealtimeMessageSchema = z.object({
   imageUrl: z.url().optional().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
+  deletedAt: z.coerce.date().optional().nullable(),
 
   authorId: z.string(),
   authorEmail: z.email().optional().nullable(),
@@ -64,6 +65,14 @@ export const RealtimeEventSchema = z.union([
   }),
   z.object({
     type: z.literal("message:updated"),
+    payload: z.object({ message: RealtimeMessageSchema }),
+  }),
+  z.object({
+    type: z.literal("message:deleted"),
+    payload: z.object({ message: RealtimeMessageSchema }),
+  }),
+  z.object({
+    type: z.literal("message:restored"),
     payload: z.object({ message: RealtimeMessageSchema }),
   }),
   z.object({

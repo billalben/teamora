@@ -15,6 +15,7 @@ import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
 import { isMessageEdited } from "@/lib/utils";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { DeletedMessagePlaceholder } from "./DeletedMessagePlaceholder";
 
 type MessageItemProps = {
   message: MessageWithCount;
@@ -68,7 +69,9 @@ export const MessageItem = memo(function MessageItem({ message, user }: MessageI
           </p>
         </div>
 
-        {isEditing ? (
+        {message.deletedAt ? (
+          <DeletedMessagePlaceholder message={message} canUndo={canEdit} />
+        ) : isEditing ? (
           <EditMessage message={message} onCancel={() => setIsEditing(false)} onSave={() => setIsEditing(false)} />
         ) : (
           <>
@@ -117,7 +120,7 @@ export const MessageItem = memo(function MessageItem({ message, user }: MessageI
         )}
       </div>
 
-      <MessageHoverToolbar messageId={message.id} canEdit={canEdit} onEdit={handleEdit} />
+      <MessageHoverToolbar message={message} canEdit={canEdit} onEdit={handleEdit} />
     </div>
   );
 });

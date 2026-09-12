@@ -2,7 +2,9 @@ import { RealtimeEvent, RealtimeEventSchema } from "@/app/schemas/realtime";
 import {
   appendThreadReply,
   incrementReplyCount,
+  setMessageDeleted,
   setMessageReactions,
+  setMessageRestored,
   updateChannelMessage,
   updateThreadMessage,
   upsertChannelMessage,
@@ -67,6 +69,28 @@ export function ChannelRealtimeProvider({ channelId, children }: ChannelRealtime
               message.id,
               (current) => ({ ...current, ...message }) as MessageWithCount
             );
+            break;
+          }
+
+          case "message:deleted": {
+            const { message } = realtimeEvent.payload;
+
+            setMessageDeleted(queryClient, {
+              channelId,
+              threadId: message.threadId ?? null,
+              messageId: message.id,
+            });
+            break;
+          }
+
+          case "message:restored": {
+            const { message } = realtimeEvent.payload;
+
+            setMessageRestored(queryClient, {
+              channelId,
+              threadId: message.threadId ?? null,
+              message,
+            });
             break;
           }
 

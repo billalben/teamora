@@ -5,7 +5,12 @@ import { requiredAuthMiddleware } from "../middlewares/auth";
 import { base } from "../middlewares/base";
 import { requiredWorspaceMiddleware } from "../middlewares/workspace";
 import { prisma } from "@/lib/prisma";
-import { createMessageSchema, toggleMessageReactionSchema, updateMessageSchema } from "../schemas/message";
+import {
+  createMessageSchema,
+  messageIdSchema,
+  toggleMessageReactionSchema,
+  updateMessageSchema,
+} from "../schemas/message";
 import { getAvatar } from "@/lib/getAvatar";
 import { getUploadThingFileKey } from "@/lib/image";
 import { utapi } from "@/lib/uploadthing-server";
@@ -15,6 +20,17 @@ import { readSecurityMiddleware } from "../middlewares/arcjet/read";
 type MessageReactions = { messageReactions: { emoji: string; userId: string }[] };
 const messageWithReactions = z.custom<Message & MessageReactions & { _count: { replies: number } }>();
 const messageWithReactionsOnly = z.custom<Message & MessageReactions>();
+
+/**
+ * Deleted messages are soft-deleted so the author can undo. Anyone reading a
+ * deleted message only ever receives a tombstone: content and image are stripped
+ * so the original body is never exposed.
+ */
+function redactDeleted<T extends Pick<Message, "deletedAt" | "content" | "imageUrl">>(message: T): T {
+  if (!message.deletedAt) return message;
+
+  return { ...message, content: "", imageUrl: null } as T;
+}
 
 export const createMessage = base
   .use(requiredAuthMiddleware)
@@ -131,7 +147,7 @@ export const listMessages = base
     const nextCursor = hasMore ? messages[messages.length - 1].id : null;
 
     return {
-      items,
+      items: items.map(redactDeleted),
       nextCursor,
     };
   });
@@ -158,7 +174,7 @@ export const updateMessage = base
   .handler(async ({ input, context, errors }) => {
     const message = await prisma.message.findUnique({
       where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
-      select: { id: true, authorId: true, imageUrl: true },
+      select: { id: true, authorId: true, imageUrl: true, deletedAt: true },
     });
 
     if (!message) {
@@ -167,6 +183,10 @@ export const updateMessage = base
 
     if (message.authorId !== context.user.id) {
       throw errors.FORBIDDEN(); // user is not the author of the message
+    }
+
+    if (message.deletedAt) {
+      throw errors.BAD_REQUEST(); // deleted messages must be restored before editing
     }
 
     const previousImageUrl = message.imageUrl;
@@ -199,6 +219,99 @@ export const updateMessage = base
       message: updated,
       canEdit: updated.authorId === context.user.id,
     };
+  });
+
+export const deleteMessage = base
+  .use(requiredAuthMiddleware)
+  .use(requiredWorspaceMiddleware)
+  .use(standardSecurityMiddleware)
+  .use(writeSecurityMiddleware)
+  .route({
+    method: "DELETE",
+    path: "/messages/:messageId",
+    summary: "Delete Message",
+    description: "Soft-delete a message. The author can restore it later.",
+    tags: ["Message"],
+  })
+  .input(messageIdSchema)
+  .output(messageWithReactionsOnly)
+  .handler(async ({ input, context, errors }) => {
+    const message = await prisma.message.findUnique({
+      where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
+      select: { id: true, authorId: true, imageUrl: true },
+    });
+
+    if (!message) {
+      throw errors.NOT_FOUND(); // message not found
+    }
+
+    if (message.authorId !== context.user.id) {
+      throw errors.FORBIDDEN(); // only the author can delete their message
+    }
+
+    const deleted = await prisma.message.update({
+      where: { id: input.messageId },
+      data: { deletedAt: new Date(), imageUrl: null },
+      include: {
+        messageReactions: { select: { emoji: true, userId: true } },
+      },
+    });
+
+    // The image cannot be recovered by undo, so remove the uploaded file.
+    if (message.imageUrl) {
+      const fileKey = getUploadThingFileKey(message.imageUrl);
+
+      if (fileKey) {
+        try {
+          await utapi.deleteFiles(fileKey);
+        } catch {
+          // best-effort cleanup; the message delete already succeeded
+        }
+      }
+    }
+
+    return redactDeleted(deleted);
+  });
+
+export const restoreMessage = base
+  .use(requiredAuthMiddleware)
+  .use(requiredWorspaceMiddleware)
+  .use(standardSecurityMiddleware)
+  .use(writeSecurityMiddleware)
+  .route({
+    method: "POST",
+    path: "/messages/:messageId/restore",
+    summary: "Restore Message",
+    description: "Restore a soft-deleted message. The image is not restored.",
+    tags: ["Message"],
+  })
+  .input(messageIdSchema)
+  .output(messageWithReactionsOnly)
+  .handler(async ({ input, context, errors }) => {
+    const message = await prisma.message.findUnique({
+      where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
+      select: { id: true, authorId: true, deletedAt: true },
+    });
+
+    if (!message) {
+      throw errors.NOT_FOUND(); // message not found
+    }
+
+    if (message.authorId !== context.user.id) {
+      throw errors.FORBIDDEN(); // only the author can restore their message
+    }
+
+    if (!message.deletedAt) {
+      throw errors.BAD_REQUEST(); // message is not deleted
+    }
+
+    return prisma.message.update({
+      where: { id: input.messageId },
+      data: { deletedAt: null },
+      include: {
+        messageReactions: { select: { emoji: true, userId: true } },
+      },
+    });
   });
 
 export const listThreadReplies = base
@@ -243,8 +356,8 @@ export const listThreadReplies = base
     });
 
     return {
-      parent: parentRow,
-      messages: replies,
+      parent: redactDeleted(parentRow),
+      messages: replies.map(redactDeleted),
     };
   });
 
@@ -273,11 +386,15 @@ export const toggleMessageReaction = base
         id: input.messageId,
         channel: { workspaceId: context.workspace.orgCode },
       },
-      select: { id: true },
+      select: { id: true, deletedAt: true },
     });
 
     if (!message) {
       throw errors.NOT_FOUND(); // message not found
+    }
+
+    if (message.deletedAt) {
+      throw errors.BAD_REQUEST(); // cannot react to a deleted message
     }
 
     const inserted = await prisma.messageReaction.createMany({
