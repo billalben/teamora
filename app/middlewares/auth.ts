@@ -17,7 +17,7 @@ export const requiredAuthMiddleware = base
     });
   });
 
-const getSession = async () => {
+async function getSession() {
   const { getUser } = getKindeServerSession();
 
   const user = await getUser();
@@ -25,4 +25,4 @@ const getSession = async () => {
   return {
     user,
   };
-};
+}

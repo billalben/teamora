@@ -1,4 +1,4 @@
-import { ChannelEventSchema, PresenceMessageSchema, UserSchema } from "@/app/schemas/realtime";
+import { PresenceMessageSchema, RealtimeEventSchema, UserSchema } from "@/app/schemas/realtime";
 import { Connection, routePartykitRequest, Server } from "partyserver";
 import z from "zod";
 
@@ -67,11 +67,12 @@ export class Chat extends Server {
         }
       }
 
-      const channelEvent = ChannelEventSchema.safeParse(parsed);
+      const realtimeEvent = RealtimeEventSchema.safeParse(parsed);
 
-      if (channelEvent.success) {
-        const payload = JSON.stringify(channelEvent.data);
+      if (realtimeEvent.success) {
+        const payload = JSON.stringify(realtimeEvent.data);
 
+        // dont echo the event back to the sender, they already applied it optimistically
         this.broadcast(payload, [connection.id]);
         return;
       }

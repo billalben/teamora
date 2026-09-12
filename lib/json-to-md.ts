@@ -1,11 +1,11 @@
 import { baseExtensions } from "@/components/rich-text-editor/extensions";
 import { renderToMarkdown } from "@tiptap/static-renderer/pm/markdown";
 
-const normalizeWhiteSpace = (text: string) => {
+function normalizeWhiteSpace(text: string) {
   return text.replace(/\s+/g, " ").trim();
-};
+}
 
-export const jsonToMarkdown = (json: string) => {
+export function jsonToMarkdown(json: string) {
   const content = JSON.parse(json);
 
   const markdown = renderToMarkdown({
@@ -14,4 +14,4 @@ export const jsonToMarkdown = (json: string) => {
   });
 
   return normalizeWhiteSpace(markdown);
-};
+}

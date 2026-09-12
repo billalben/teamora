@@ -1,9 +1,9 @@
-import arcjet, { detectBot, shield } from "@/lib/arcjet";
+import { aj, detectBot, shield } from "@/lib/arcjet";
 import { base } from "../base";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 
-const buildStandardAj = () =>
-  arcjet
+function buildStandardAj() {
+  return aj
     .withRule(
       shield({
         mode: "LIVE",
@@ -16,6 +16,7 @@ const buildStandardAj = () =>
         // deny: ["CATEGORY:GOOGLE"],
       })
     );
+}
 
 export const standardSecurityMiddleware = base
   .$context<{

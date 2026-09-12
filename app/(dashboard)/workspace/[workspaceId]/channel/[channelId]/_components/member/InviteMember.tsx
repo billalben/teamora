@@ -19,7 +19,7 @@ import { useMutation } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 
-export default function InviteMember() {
+export function InviteMember() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = (open: boolean) => {

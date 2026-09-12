@@ -1,5 +1,5 @@
 import React from "react";
-import WorkspaceHeader from "./_components/WorkspaceHeader";
+import { WorkspaceHeader } from "./_components/WorkspaceHeader";
 import { CreateNewChannel } from "./_components/CreateNewChannel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -8,7 +8,7 @@ import { WorkspaceMembersList } from "./_components/WorkspaceMembersList";
 import { getQueryClient, HydrateClient } from "@/lib/query/hydration";
 import { orpc } from "@/lib/orpc";
 
-const ChannelListLayout = async ({ children }: { children: React.ReactNode }) => {
+export default async function ChannelListLayout({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   await queryClient.prefetchQuery(orpc.channel.list.queryOptions());
@@ -64,6 +64,4 @@ const ChannelListLayout = async ({ children }: { children: React.ReactNode }) =>
       {children}
     </div>
   );
-};
-
-export default ChannelListLayout;
+}

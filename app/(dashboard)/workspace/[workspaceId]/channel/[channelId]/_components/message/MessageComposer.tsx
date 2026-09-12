@@ -3,19 +3,19 @@
 import { RichTextEditor } from "@/components/rich-text-editor/Editor";
 import { ImageUploadModal } from "@/components/rich-text-editor/ImageUploadModal";
 import { Button } from "@/components/ui/button";
-import { useAttachmentUploadType } from "@/hooks/use-attachement-upload";
+import type { UseAttachmentUploadReturn } from "@/hooks/use-attachement-upload";
 import { ImageIcon, SendIcon } from "lucide-react";
-import AttachmentChip from "./AttachmentChip";
+import { AttachmentChip } from "./AttachmentChip";
 
-interface IAppProps {
+type MessageComposerProps = {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
-  upload: useAttachmentUploadType;
-}
+  upload: UseAttachmentUploadReturn;
+};
 
-export function MessageComposer({ value, onChange, onSubmit, isSubmitting, upload }: IAppProps) {
+export function MessageComposer({ value, onChange, onSubmit, isSubmitting, upload }: MessageComposerProps) {
   return (
     <>
       <RichTextEditor

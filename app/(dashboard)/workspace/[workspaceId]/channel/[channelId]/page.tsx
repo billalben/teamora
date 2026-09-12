@@ -6,11 +6,11 @@ import { MessageInputForm } from "./_components/message/MessageInputForm";
 import { MessagesList } from "./_components/MessagesList";
 import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
-import ThreadSidebar from "./_components/thread/ThreadSidebar";
+import { ThreadSidebar } from "./_components/thread/ThreadSidebar";
 import { ThreadProvider, useThread } from "@/providers/ThreadProvider";
 import { ChannelRealtimeProvider } from "@/providers/ChannelRealtimeProvider";
 
-const ChannelPageMain = ({ channelId }: { channelId: string }) => {
+function ChannelPageMain({ channelId }: { channelId: string }) {
   const { isThreadOpen } = useThread();
 
   const { data, isError } = useQuery(
@@ -40,9 +40,9 @@ const ChannelPageMain = ({ channelId }: { channelId: string }) => {
       {isThreadOpen && <ThreadSidebar />}
     </div>
   );
-};
+}
 
-const ChannelPage = () => {
+export default function ChannelPage() {
   const { channelId } = useParams<{ channelId: string }>();
 
   return (
@@ -52,6 +52,4 @@ const ChannelPage = () => {
       </ChannelRealtimeProvider>
     </ThreadProvider>
   );
-};
-
-export default ChannelPage;
+}

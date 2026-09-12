@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { MessageSquareIcon, XIcon } from "lucide-react";
 import Image from "next/image";
-import ThreadReply from "./ThreadReply";
-import ThreadReplyForm from "./ThreadReplyForm";
+import { ThreadReply } from "./ThreadReply";
+import { ThreadReplyForm } from "./ThreadReplyForm";
 import { useThread } from "@/providers/ThreadProvider";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
@@ -12,7 +12,7 @@ import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
 import { SummarizeThread } from "./SummarizeThread";
 
-export default function ThreadSidebar() {
+export function ThreadSidebar() {
   const { selectedThreadId, closeThread } = useThread();
 
   const {
@@ -82,6 +82,7 @@ export default function ThreadSidebar() {
                 <ReactionsBar
                   context={{ type: "thread", threadId: threadData.parent.id }}
                   messageId={threadData.parent.id}
+                  userId={user.id}
                   reactions={parentReactions}
                 />
               </div>

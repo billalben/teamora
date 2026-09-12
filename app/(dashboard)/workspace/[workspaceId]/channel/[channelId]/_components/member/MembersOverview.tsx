@@ -7,13 +7,13 @@ import { orpc } from "@/lib/orpc";
 import { useQuery } from "@tanstack/react-query";
 import { SearchIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import MemberItem from "./MemberItem";
+import { MemberItem } from "./MemberItem";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useParams } from "next/navigation";
 import { usePresence } from "@/hooks/use-presence";
 import { User } from "@/app/schemas/realtime";
 
-export default function MembersOverview() {
+export function MembersOverview() {
   const [searchMember, setSearchMember] = useState("");
   const debouncedMemberSearch = useDebounce(searchMember, 500);
   const trimLowercaseMemberSearch = debouncedMemberSearch.trim().toLowerCase();

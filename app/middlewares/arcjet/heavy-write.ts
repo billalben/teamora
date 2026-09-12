@@ -1,10 +1,10 @@
-import arcjet, { slidingWindow } from "@/lib/arcjet";
+import { aj, slidingWindow } from "@/lib/arcjet";
 import { base } from "../base";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 import { sensitiveInfo } from "@arcjet/next";
 
-const buildHeavyWriteAj = () =>
-  arcjet
+function buildHeavyWriteAj() {
+  return aj
     .withRule(
       slidingWindow({
         mode: "LIVE",
@@ -18,6 +18,7 @@ const buildHeavyWriteAj = () =>
         allow: ["CREDIT_CARD_NUMBER", "EMAIL", "PHONE_NUMBER", "IP_ADDRESS"],
       })
     );
+}
 
 export const heavyWriteSecurityMiddleware = base
   .$context<{

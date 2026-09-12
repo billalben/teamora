@@ -6,11 +6,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { SmilePlusIcon } from "lucide-react";
 import { useState } from "react";
 
-interface iAppProps {
+type EmojiReactionProps = {
   onSelectEmoji: (emoji: string) => void;
-}
+};
 
-export function EmojiReaction({ onSelectEmoji }: iAppProps) {
+export function EmojiReaction({ onSelectEmoji }: EmojiReactionProps) {
   const [open, setOpen] = useState(false);
 
   const handleEmojiSelect = (emoji: string) => {

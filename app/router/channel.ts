@@ -5,7 +5,7 @@ import { requiredAuthMiddleware } from "../middlewares/auth";
 import { base } from "../middlewares/base";
 import { requiredWorspaceMiddleware } from "../middlewares/workspace";
 import { channelNameSchema } from "../schemas/channel";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { Channel } from "@/lib/generated/prisma/client";
 import { init, organization_user, Organizations } from "@kinde/management-api-js";
 import { KindeOrganization, KindeUser } from "@kinde-oss/kinde-auth-nextjs";

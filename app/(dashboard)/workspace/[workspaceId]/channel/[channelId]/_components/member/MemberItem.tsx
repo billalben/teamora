@@ -4,12 +4,12 @@ import { getAvatar } from "@/lib/getAvatar";
 import { cn } from "@/lib/utils";
 import { organization_user } from "@kinde/management-api-js";
 
-interface iAppProps {
+type MemberItemProps = {
   member: organization_user;
   isOnline: boolean;
-}
+};
 
-export default function MemberItem({ member, isOnline }: iAppProps) {
+export function MemberItem({ member, isOnline }: MemberItemProps) {
   const isAdmin = member.roles?.includes("admin");
 
   return (

@@ -10,11 +10,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 
-interface iAppProps {
+type SummarizeThreadProps = {
   messageId: string;
-}
+};
 
-export function SummarizeThread({ messageId }: iAppProps) {
+export function SummarizeThread({ messageId }: SummarizeThreadProps) {
   const [openPopover, setOpenPopover] = useState(false);
 
   const handleOpenPopover = (open: boolean) => {

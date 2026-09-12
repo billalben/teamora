@@ -10,12 +10,12 @@ import { useChat } from "@ai-sdk/react";
 import { Message, MessageContent, MessageResponse } from "../ai-elements/message";
 import { Skeleton } from "../ui/skeleton";
 
-interface iAppProps {
+type ComposeAssistantProps = {
   content: string;
   onAccept?: (text: string) => void;
-}
+};
 
-export function ComposeAssistant({ content, onAccept }: iAppProps) {
+export function ComposeAssistant({ content, onAccept }: ComposeAssistantProps) {
   const [openPopover, setOpenPopover] = useState(false);
 
   const contentRef = useRef(content);

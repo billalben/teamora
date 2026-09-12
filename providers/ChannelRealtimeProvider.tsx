@@ -1,11 +1,12 @@
-import { ChannelEvent, ChannelEventSchema } from "@/app/schemas/realtime";
+import { RealtimeEvent, RealtimeEventSchema } from "@/app/schemas/realtime";
 import {
   appendThreadReply,
   incrementReplyCount,
-  patchMessageReactions,
-  replaceChannelMessage,
-  replaceThreadMessage,
+  setMessageReactions,
+  updateChannelMessage,
+  updateThreadMessage,
   upsertChannelMessage,
+  type MessageWithCount,
 } from "@/lib/query/message-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import usePartySocket from "partysocket/react";
@@ -13,13 +14,13 @@ import { createContext, ReactNode, useContext, useMemo } from "react";
 import { env } from "@/lib/env";
 
 type ChannelRealtimeContextValue = {
-  send: (event: ChannelEvent) => void;
+  sendEvent: (event: RealtimeEvent) => void;
 };
 
-interface ChannelRealtimeProviderProps {
+type ChannelRealtimeProviderProps = {
   channelId: string;
   children: ReactNode;
-}
+};
 
 const ChannelRealtimeContext = createContext<ChannelRealtimeContextValue | null>(null);
 
@@ -33,48 +34,48 @@ export function ChannelRealtimeProvider({ channelId, children }: ChannelRealtime
 
     onMessage(event) {
       try {
-        const parsed = JSON.parse(event.data);
-
-        const result = ChannelEventSchema.safeParse(parsed);
+        const result = RealtimeEventSchema.safeParse(JSON.parse(event.data));
 
         if (!result.success) {
           console.warn("invalid channel event");
           return;
         }
 
-        const evt = result.data;
+        const realtimeEvent = result.data;
 
-        if (evt.type === "message:created") {
-          const raw = evt.payload.message;
-
-          if (raw.threadId) {
-            appendThreadReply(queryClient, raw.threadId, raw);
-          } else {
-            upsertChannelMessage(queryClient, channelId, raw);
+        switch (realtimeEvent.type) {
+          case "message:created": {
+            upsertChannelMessage(queryClient, channelId, realtimeEvent.payload.message);
+            break;
           }
 
-          return;
-        }
+          case "thread:reply:created": {
+            const { message } = realtimeEvent.payload;
 
-        if (evt.type === "message:updated") {
-          const raw = evt.payload.message;
+            appendThreadReply(queryClient, message.threadId, message);
+            incrementReplyCount(queryClient, channelId, message.threadId, 1);
+            break;
+          }
 
-          replaceChannelMessage(queryClient, channelId, raw);
-          replaceThreadMessage(queryClient, raw);
+          case "message:updated": {
+            const { message } = realtimeEvent.payload;
 
-          return;
-        }
+            updateChannelMessage(queryClient, channelId, message.id, (current) => ({ ...current, ...message }));
+            updateThreadMessage(
+              queryClient,
+              message.threadId ?? message.id,
+              message.id,
+              (current) => ({ ...current, ...message }) as MessageWithCount
+            );
+            break;
+          }
 
-        if (evt.type === "reaction:updated") {
-          patchMessageReactions(queryClient, evt.payload.messageId, evt.payload.messageReactions);
+          case "reaction:updated": {
+            const { messageId, threadId, messageReactions } = realtimeEvent.payload;
 
-          return;
-        }
-
-        if (evt.type === "message:replies:increment") {
-          incrementReplyCount(queryClient, evt.payload.messageId, evt.payload.delta);
-
-          return;
+            setMessageReactions(queryClient, { channelId, threadId, messageId, messageReactions });
+            break;
+          }
         }
       } catch (error) {
         console.error("failed to parse message: ", error);
@@ -84,7 +85,7 @@ export function ChannelRealtimeProvider({ channelId, children }: ChannelRealtime
 
   const value = useMemo<ChannelRealtimeContextValue>(() => {
     return {
-      send: (event) => {
+      sendEvent: (event) => {
         socket.send(JSON.stringify(event));
       },
     };

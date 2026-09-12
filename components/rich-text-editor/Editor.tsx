@@ -5,14 +5,14 @@ import { editorExtensions } from "./extensions";
 import { MenuBar } from "./MenuBar";
 import { ReactNode } from "react";
 
-interface IAppProps {
+type RichTextEditorProps = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   field: any;
   sendButton: ReactNode;
   footerLeft?: ReactNode;
-}
+};
 
-export function RichTextEditor({ field, sendButton, footerLeft }: IAppProps) {
+export function RichTextEditor({ field, sendButton, footerLeft }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: editorExtensions,
     content: (() => {

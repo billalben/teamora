@@ -9,10 +9,10 @@ const md = new MarkdownIt({
   breaks: false,
 });
 
-export const markdownToJson = (markdown: string) => {
+export function markdownToJson(markdown: string) {
   const html = md.render(markdown);
 
   const cleanHtml = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 
   return generateJSON(cleanHtml, editorExtensions);
-};
+}

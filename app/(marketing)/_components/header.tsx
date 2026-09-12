@@ -18,7 +18,7 @@ const menuItems = [
   { name: "About", href: "#link" },
 ];
 
-export const HeroHeader = () => {
+export function HeroHeader() {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -144,4 +144,4 @@ export const HeroHeader = () => {
       </nav>
     </header>
   );
-};
+}

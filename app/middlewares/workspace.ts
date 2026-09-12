@@ -16,10 +16,10 @@ export const requiredWorspaceMiddleware = base
     });
   });
 
-const getWorkspace = async () => {
+async function getWorkspace() {
   const { getOrganization } = getKindeServerSession();
 
   const organization = await getOrganization();
 
   return organization;
-};
+}

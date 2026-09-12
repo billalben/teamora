@@ -16,9 +16,9 @@ import { Button } from "../ui/button";
 import { ComposeAssistant } from "./ComposeAssistant";
 import { markdownToJson } from "@/lib/md-to-json";
 
-interface MenuBarProps {
+type MenuBarProps = {
   editor: Editor | null;
-}
+};
 
 export function MenuBar({ editor }: MenuBarProps) {
   const editorState = useEditorState({

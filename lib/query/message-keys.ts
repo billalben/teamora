@@ -13,3 +13,7 @@ export function messageListInfiniteKey(channelId: string) {
     input: { channelId, cursor: undefined, limit: MESSAGE_PAGE_SIZE },
   });
 }
+
+export function threadMessagesKey(threadId: string) {
+  return orpc.message.thread.list.key({ type: "query", input: { messageId: threadId } });
+}

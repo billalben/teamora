@@ -68,4 +68,4 @@ export function useAttachmentUpload() {
   };
 }
 
-export type useAttachmentUploadType = ReturnType<typeof useAttachmentUpload>;
+export type UseAttachmentUploadReturn = ReturnType<typeof useAttachmentUpload>;

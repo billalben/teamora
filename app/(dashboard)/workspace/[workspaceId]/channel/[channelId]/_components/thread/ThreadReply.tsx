@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { SafeContent } from "@/components/rich-text-editor/SafeContent";
 import Image from "next/image";
 import { ReactionsBar } from "../reaction/ReactionsBar";
@@ -5,13 +6,13 @@ import { groupReactions } from "../reaction/groupReactions";
 import { MessageWithCount } from "@/lib/query/message-cache";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
 
-interface ThreadReplyProps {
+type ThreadReplyProps = {
   message: MessageWithCount;
   selectedThreadId: string;
   user: KindeUser<Record<string, unknown>>;
-}
+};
 
-export default function ThreadReply({ message, selectedThreadId, user }: ThreadReplyProps) {
+export const ThreadReply = memo(function ThreadReply({ message, selectedThreadId, user }: ThreadReplyProps) {
   const groupedReactions = groupReactions(message.messageReactions ?? [], user.id ?? "");
 
   return (
@@ -49,9 +50,10 @@ export default function ThreadReply({ message, selectedThreadId, user }: ThreadR
         <ReactionsBar
           context={{ type: "thread", threadId: selectedThreadId }}
           messageId={message.id}
+          userId={user.id}
           reactions={groupedReactions}
         />
       </div>
     </div>
   );
-}
+});

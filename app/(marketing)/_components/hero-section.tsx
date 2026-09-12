@@ -25,7 +25,7 @@ const transitionVariants = {
   },
 };
 
-export default function HeroSection() {
+export function HeroSection() {
   return (
     <>
       <div aria-hidden className="absolute inset-0 isolate hidden opacity-65 contain-strict lg:block">

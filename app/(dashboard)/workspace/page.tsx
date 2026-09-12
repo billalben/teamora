@@ -1,7 +1,7 @@
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 
-const WorksspacePage = async () => {
+export default async function WorkspacePage() {
   const { getOrganization } = getKindeServerSession();
   const org = await getOrganization();
 
@@ -10,6 +10,4 @@ const WorksspacePage = async () => {
   }
 
   return null;
-};
-
-export default WorksspacePage;
+}

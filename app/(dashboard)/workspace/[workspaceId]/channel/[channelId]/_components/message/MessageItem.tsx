@@ -6,7 +6,7 @@ import { getAvatar } from "@/lib/getAvatar";
 import type { MessageWithCount } from "@/lib/query/message-cache";
 import Image from "next/image";
 import { MessageHoverToolbar } from "../toolbar";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { EditMessage } from "../toolbar/EditMessage";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
 import { MessageSquareIcon } from "lucide-react";
@@ -14,12 +14,12 @@ import { useThread } from "@/providers/ThreadProvider";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
 
-type TProps = {
+type MessageItemProps = {
   message: MessageWithCount;
   user: KindeUser<Record<string, unknown>>;
 };
 
-export function MessageItem({ message, user }: TProps) {
+export const MessageItem = memo(function MessageItem({ message, user }: MessageItemProps) {
   const { openThread } = useThread();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -85,6 +85,7 @@ export function MessageItem({ message, user }: TProps) {
 
             <ReactionsBar
               messageId={message.id}
+              userId={user.id}
               reactions={groupedReactions}
               context={{ type: "channel", threadId: message.id }}
             />
@@ -111,4 +112,4 @@ export function MessageItem({ message, user }: TProps) {
       <MessageHoverToolbar messageId={message.id} canEdit={canEdit} onEdit={handleEdit} />
     </div>
   );
-}
+});

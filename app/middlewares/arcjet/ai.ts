@@ -1,10 +1,10 @@
-import arcjet, { detectBot, shield, slidingWindow } from "@/lib/arcjet";
+import { aj, detectBot, shield, slidingWindow } from "@/lib/arcjet";
 import { sensitiveInfo } from "@arcjet/next";
 import { base } from "../base";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
 
-const buildAiAj = () =>
-  arcjet
+function buildAiAj() {
+  return aj
     .withRule(shield({ mode: "LIVE" }))
     .withRule(
       slidingWindow({
@@ -25,6 +25,7 @@ const buildAiAj = () =>
         allow: ["CREDIT_CARD_NUMBER", "EMAIL", "PHONE_NUMBER", "IP_ADDRESS"],
       })
     );
+}
 
 export const aiSecuriyMiddleware = base
   .$context<{

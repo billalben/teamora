@@ -2,15 +2,15 @@
 
 import { createContext, useContext, useState } from "react";
 
-interface IThreadContext {
+type ThreadContextValue = {
   selectedThreadId: string | null;
   openThread: (messageId: string) => void;
   closeThread: () => void;
   toggleThread: (messageId: string) => void;
   isThreadOpen: boolean;
-}
+};
 
-const ThreadContext = createContext<IThreadContext | undefined>(undefined);
+const ThreadContext = createContext<ThreadContextValue | undefined>(undefined);
 
 export function ThreadProvider({ children }: { children: React.ReactNode }) {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);

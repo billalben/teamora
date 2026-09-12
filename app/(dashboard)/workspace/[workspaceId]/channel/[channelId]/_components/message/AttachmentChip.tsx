@@ -2,14 +2,14 @@ import { AttachmentImage } from "@/components/ui/attachment-image";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
 
-interface TAppsProps {
+type AttachmentChipProps = {
   url: string;
   fileName?: string;
   onRemoveImage: () => void;
   isRemoving?: boolean;
-}
+};
 
-export default function AttachmentChip({ url, fileName, onRemoveImage, isRemoving }: TAppsProps) {
+export function AttachmentChip({ url, fileName, onRemoveImage, isRemoving }: AttachmentChipProps) {
   return (
     <div className="group relative overflow-hidden rounded-md bg-muted size-12">
       <AttachmentImage src={url} fileName={fileName} alt="Attachment" fill className="object-cover" />

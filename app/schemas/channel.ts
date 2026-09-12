@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const transformChannelName = (name: string) => {
+export function transformChannelName(name: string) {
   return name
     .trim()
     .toLowerCase()
@@ -8,7 +8,7 @@ export const transformChannelName = (name: string) => {
     .replace(/[^a-z0-9-]/g, "") // Remove special characters
     .replace(/-+/g, "-") // Replace multiple hyphens with a single hyphen
     .replace(/^-+|-+$/g, ""); // Remove leading and trailing hyphens
-};
+}
 
 export const channelNameSchema = z.object({
   name: z

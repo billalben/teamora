@@ -6,23 +6,24 @@ import { updateMessageSchema, UpdateMessageSchemaType } from "@/app/schemas/mess
 import { Field, FieldGroup } from "@/components/ui/field";
 import { RichTextEditor } from "@/components/rich-text-editor/Editor";
 import { Button } from "@/components/ui/button";
-import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
-import { messageListInfiniteKey } from "@/lib/query/message-keys";
+import { InfiniteMessages, messageListInfiniteKey, threadMessagesKey } from "@/lib/query/message-keys";
+import { updateChannelMessage, updateThreadMessage, type ThreadMessages } from "@/lib/query/message-cache";
 import { useChannelRealtime } from "@/providers/ChannelRealtimeProvider";
 import { toast } from "sonner";
 import { Message } from "@/lib/generated/prisma/client";
 import { Loader2Icon } from "lucide-react";
 
-type TProps = {
+type EditMessageProps = {
   message: Message;
   onCancel: () => void;
   onSave: () => void;
 };
 
-export function EditMessage({ message, onCancel, onSave }: TProps) {
+export function EditMessage({ message, onCancel, onSave }: EditMessageProps) {
   const queryClient = useQueryClient();
-  const { send } = useChannelRealtime();
+  const { sendEvent } = useChannelRealtime();
 
   const form = useForm<UpdateMessageSchemaType>({
     resolver: zodResolver(updateMessageSchema),
@@ -31,35 +32,70 @@ export function EditMessage({ message, onCancel, onSave }: TProps) {
 
   const updateMessageMutation = useMutation(
     orpc.message.update.mutationOptions({
-      onSuccess: (updated) => {
-        type TMessagePage = { items: Message[]; nextCursor?: string };
-        type TInfiniteMessages = InfiniteData<TMessagePage>;
+      onMutate: async (variables) => {
+        if (!message.channelId) return undefined;
 
-        if (message.channelId) {
-          queryClient.setQueryData<TInfiniteMessages>(messageListInfiniteKey(message.channelId), (old) => {
-            if (!old) return old;
+        const channelKey = messageListInfiniteKey(message.channelId);
+        const threadKey = threadMessagesKey(message.threadId ?? message.id);
 
-            const updatedMessage = updated.message;
+        await Promise.all([
+          queryClient.cancelQueries({ queryKey: channelKey }),
+          queryClient.cancelQueries({ queryKey: threadKey }),
+        ]);
 
-            const pages = old.pages.map((page) => ({
-              ...page,
-              items: page.items.map((item) => (item.id === updatedMessage.id ? { ...item, ...updatedMessage } : item)),
-            }));
+        const previousChannel = queryClient.getQueryData<InfiniteMessages>(channelKey);
+        const previousThread = queryClient.getQueryData<ThreadMessages>(threadKey);
 
-            return {
-              ...old,
-              pages,
-            };
-          });
+        const updatedAt = new Date();
+
+        updateChannelMessage(queryClient, message.channelId, message.id, (current) => ({
+          ...current,
+          content: variables.content,
+          updatedAt,
+        }));
+        updateThreadMessage(queryClient, message.threadId ?? message.id, message.id, (current) => ({
+          ...current,
+          content: variables.content,
+          updatedAt,
+        }));
+
+        return { previousChannel, previousThread, channelKey, threadKey };
+      },
+      onError: (error, _variables, context) => {
+        if (context) {
+          if (context.previousChannel) {
+            queryClient.setQueryData(context.channelKey, context.previousChannel);
+          } else {
+            queryClient.removeQueries({ queryKey: context.channelKey });
+          }
+
+          if (context.previousThread) {
+            queryClient.setQueryData(context.threadKey, context.previousThread);
+          } else {
+            queryClient.removeQueries({ queryKey: context.threadKey });
+          }
         }
 
-        send({ type: "message:updated", payload: { message: updated.message } });
+        toast.error(error.message);
+      },
+      onSuccess: (updated) => {
+        const updatedMessage = updated.message;
+
+        if (message.channelId) {
+          updateChannelMessage(queryClient, message.channelId, updatedMessage.id, (current) => ({
+            ...current,
+            ...updatedMessage,
+          }));
+          updateThreadMessage(queryClient, message.threadId ?? message.id, updatedMessage.id, (current) => ({
+            ...current,
+            ...updatedMessage,
+          }));
+        }
+
+        sendEvent({ type: "message:updated", payload: { message: updatedMessage } });
 
         toast.success("Message updated successfully");
         onSave();
-      },
-      onError: (error) => {
-        toast.error(error.message);
       },
     })
   );

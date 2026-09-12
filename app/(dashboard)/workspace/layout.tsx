@@ -7,7 +7,7 @@ import { getQueryClient, HydrateClient } from "@/lib/query/hydration";
 
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-const workspaceLayout = async ({ children }: { children: React.ReactNode }) => {
+export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   await queryClient.prefetchQuery(orpc.workspace.list.queryOptions());
@@ -34,6 +34,4 @@ const workspaceLayout = async ({ children }: { children: React.ReactNode }) => {
       <ReactQueryDevtools initialIsOpen={false} />
     </div>
   );
-};
-
-export default workspaceLayout;
+}

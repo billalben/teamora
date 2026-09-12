@@ -2,7 +2,7 @@ import z from "zod";
 import { requiredAuthMiddleware } from "../middlewares/auth";
 import { base } from "../middlewares/base";
 import { requiredWorspaceMiddleware } from "../middlewares/workspace";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { jsonToMarkdown } from "@/lib/json-to-md";
 import { streamText } from "ai";
 

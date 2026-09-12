@@ -26,7 +26,14 @@ export const PresenceMessageSchema = z.union([
 
 export type PresenceMessage = z.infer<typeof PresenceMessageSchema>;
 
-// Minial message shape for realtime events
+export const ReactionSchema = z.object({
+  emoji: z.string(),
+  userId: z.string(),
+});
+
+export type Reaction = z.infer<typeof ReactionSchema>;
+
+// Minimal message shape for realtime events
 export const RealtimeMessageSchema = z.object({
   id: z.string(),
   content: z.string().optional().nullable(),
@@ -42,15 +49,15 @@ export const RealtimeMessageSchema = z.object({
   channelId: z.string().nullable(),
   threadId: z.string().optional().nullable(),
 
-  messageReactions: z.array(z.object({ emoji: z.string(), userId: z.string() })).optional(),
+  messageReactions: z.array(ReactionSchema).optional(),
   _count: z.object({ replies: z.number() }).optional(),
-  replyCount: z.number().optional(),
 });
 
 export type RealtimeMessage = z.infer<typeof RealtimeMessageSchema>;
 
-// Channel-level events
-export const ChannelEventSchema = z.union([
+// Events scoped to a single channel room. Threads live in the same room:
+// a reply is just a message with `threadId` set.
+export const RealtimeEventSchema = z.union([
   z.object({
     type: z.literal("message:created"),
     payload: z.object({ message: RealtimeMessageSchema }),
@@ -60,19 +67,17 @@ export const ChannelEventSchema = z.union([
     payload: z.object({ message: RealtimeMessageSchema }),
   }),
   z.object({
+    type: z.literal("thread:reply:created"),
+    payload: z.object({ message: RealtimeMessageSchema.extend({ threadId: z.string() }) }),
+  }),
+  z.object({
     type: z.literal("reaction:updated"),
     payload: z.object({
       messageId: z.string(),
-      messageReactions: z.array(z.object({ emoji: z.string(), userId: z.string() })),
-    }),
-  }),
-  z.object({
-    type: z.literal("message:replies:increment"),
-    payload: z.object({
-      messageId: z.string(),
-      delta: z.number(),
+      threadId: z.string().nullable(),
+      messageReactions: z.array(ReactionSchema),
     }),
   }),
 ]);
 
-export type ChannelEvent = z.infer<typeof ChannelEventSchema>;
+export type RealtimeEvent = z.infer<typeof RealtimeEventSchema>;

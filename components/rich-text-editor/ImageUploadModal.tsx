@@ -4,14 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { UploadDropzone } from "@/lib/uploadthing";
 import { toast } from "sonner";
 
-interface TAppProps {
+type ImageUploadModalProps = {
   isOpen: boolean;
   handleModal: (isOpen: boolean) => void;
   onUploadComplete: (attachment: { url: string; key: string; name: string }) => void;
   handleStartUpload: () => void;
   handleUploadError: () => void;
   isUploading: boolean;
-}
+};
 
 export function ImageUploadModal({
   isOpen,
@@ -20,7 +20,7 @@ export function ImageUploadModal({
   handleStartUpload,
   handleUploadError,
   isUploading,
-}: TAppProps) {
+}: ImageUploadModalProps) {
   return (
     <Dialog
       open={isOpen}

@@ -4,12 +4,12 @@ import usePartySocket from "partysocket/react";
 import { PresenceMessage, PresenceMessageSchema, User } from "@/app/schemas/realtime";
 import { env } from "@/lib/env";
 
-interface usePresenceProps {
+type UsePresenceOptions = {
   room: string;
   currentUser: User | null;
-}
+};
 
-export function usePresence({ room, currentUser }: usePresenceProps) {
+export function usePresence({ room, currentUser }: UsePresenceOptions) {
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
 
   const socket = usePartySocket({

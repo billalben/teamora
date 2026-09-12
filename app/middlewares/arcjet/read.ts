@@ -1,15 +1,16 @@
-import arcjet, { slidingWindow } from "@/lib/arcjet";
+import { aj, slidingWindow } from "@/lib/arcjet";
 import { base } from "../base";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs";
 
-const buildReadAj = () =>
-  arcjet.withRule(
+function buildReadAj() {
+  return aj.withRule(
     slidingWindow({
       mode: "LIVE",
       interval: "1m",
       max: 180,
     })
   );
+}
 
 export const readSecurityMiddleware = base
   .$context<{

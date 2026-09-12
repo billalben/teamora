@@ -4,11 +4,11 @@ import { AntennaIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import { CreateNewChannel } from "./_components/CreateNewChannel";
 
-interface IAppProps {
+type WorkspaceIdPageProps = {
   params: Promise<{ workspaceId: string }>;
-}
+};
 
-const workspaceIdPage = async ({ params }: IAppProps) => {
+export default async function WorkspaceIdPage({ params }: WorkspaceIdPageProps) {
   const { workspaceId } = await params;
   const { channels } = await client.channel.list();
 
@@ -34,6 +34,4 @@ const workspaceIdPage = async ({ params }: IAppProps) => {
       </Empty>
     </div>
   );
-};
-
-export default workspaceIdPage;
+}
