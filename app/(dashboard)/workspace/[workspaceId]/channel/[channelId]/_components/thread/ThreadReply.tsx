@@ -5,6 +5,7 @@ import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
 import { MessageWithCount } from "@/lib/query/message-cache";
 import { KindeUser } from "@kinde-oss/kinde-auth-nextjs/types";
+import { isMessageEdited } from "@/lib/utils";
 
 type ThreadReplyProps = {
   message: MessageWithCount;
@@ -29,6 +30,7 @@ export const ThreadReply = memo(function ThreadReply({ message, selectedThreadId
           <span className="text-sm font-medium">{message.authorName}</span>
           <span className="text-xs text-muted-foreground">
             {new Intl.DateTimeFormat("en-US", { dateStyle: "short", timeStyle: "short" }).format(message.createdAt)}
+            {isMessageEdited(message.createdAt, message.updatedAt) && <span className="ml-1 italic">(edited)</span>}
           </span>
         </div>
 

@@ -69,9 +69,9 @@ export function ReactionsBar({ messageId, userId, reactions, context }: Reaction
           }
         }
 
-        toast.error("Failed to add reaction");
+        toast.error("Failed to update reaction");
       },
-      onSuccess: (data) => {
+      onSuccess: (data, variables) => {
         setMessageReactions(queryClient, {
           channelId,
           threadId,
@@ -88,7 +88,11 @@ export function ReactionsBar({ messageId, userId, reactions, context }: Reaction
           },
         });
 
-        toast.success("Reaction added");
+        toast.success(
+          data.messageReactions.some((reaction) => reaction.emoji === variables.emoji && reaction.userId === userId)
+            ? "Reaction added"
+            : "Reaction removed"
+        );
       },
     })
   );

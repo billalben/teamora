@@ -11,6 +11,7 @@ import { ThreadSidebarSkeleton } from "./ThreadSidebarSkeleton";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
 import { SummarizeThread } from "./SummarizeThread";
+import { isMessageEdited } from "@/lib/utils";
 
 export function ThreadSidebarContent() {
   const { selectedThreadId, closeThread } = useThread();
@@ -70,6 +71,9 @@ export function ThreadSidebarContent() {
                   <span className="text-xs text-muted-foreground">
                     {new Intl.DateTimeFormat("en-US", { dateStyle: "short", timeStyle: "short" }).format(
                       threadData.parent.createdAt
+                    )}
+                    {isMessageEdited(threadData.parent.createdAt, threadData.parent.updatedAt) && (
+                      <span className="ml-1 italic">(edited)</span>
                     )}
                   </span>
                 </div>

@@ -13,6 +13,7 @@ import { MessageSquareIcon } from "lucide-react";
 import { useThread } from "@/providers/ThreadProvider";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
+import { isMessageEdited } from "@/lib/utils";
 
 type MessageItemProps = {
   message: MessageWithCount;
@@ -59,6 +60,10 @@ export const MessageItem = memo(function MessageItem({ message, user }: MessageI
               hour: "2-digit",
               minute: "2-digit",
             }).format(new Date(message.createdAt))}
+
+            {isMessageEdited(message.createdAt, message.updatedAt) && (
+              <span className="ml-1 text-xs italic text-muted-foreground">(edited)</span>
+            )}
           </p>
         </div>
 
