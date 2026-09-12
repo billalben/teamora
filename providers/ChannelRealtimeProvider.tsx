@@ -10,6 +10,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import usePartySocket from "partysocket/react";
 import { createContext, ReactNode, useContext, useMemo } from "react";
+import { env } from "@/lib/env";
 
 type ChannelRealtimeContextValue = {
   send: (event: ChannelEvent) => void;
@@ -26,7 +27,7 @@ export function ChannelRealtimeProvider({ channelId, children }: ChannelRealtime
   const queryClient = useQueryClient();
 
   const socket = usePartySocket({
-    host: "http://localhost:8787",
+    host: env.NEXT_PUBLIC_PARTYKIT_HOST,
     room: `channel-${channelId}`,
     party: "chat",
 

@@ -11,7 +11,11 @@
     "prepare": "husky",
     "lint-staged": "lint-staged",
     "knip": "knip",
-    "knip:md": "knip --reporter markdown > knip-report.md"
+    "knip:md": "knip --reporter markdown > knip-report.md",
+    "wrangler:dev": "wrangler dev",
+    "wrangler:types": "wrangler types",
+    "wrangler:deploy": "wrangler deploy",
+    "wrangler:tail": "wrangler tail"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.51",
@@ -30,6 +34,7 @@
     "@streamdown/code": "^1.1.1",
     "@streamdown/math": "^1.0.2",
     "@streamdown/mermaid": "^1.0.2",
+    "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-query": "^5.90.16",
     "@tanstack/react-query-devtools": "^5.91.2",
     "@tiptap/extension-code-block-lowlight": "^3.29.2",

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import usePartySocket from "partysocket/react";
 import { PresenceMessage, PresenceMessageSchema, User } from "@/app/schemas/realtime";
+import { env } from "@/lib/env";
 
 interface usePresenceProps {
   room: string;
@@ -12,7 +13,7 @@ export function usePresence({ room, currentUser }: usePresenceProps) {
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
 
   const socket = usePartySocket({
-    host: "http://localhost:8787",
+    host: env.NEXT_PUBLIC_PARTYKIT_HOST,
     room: room,
     party: "chat",
     onOpen() {

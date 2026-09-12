@@ -9,9 +9,10 @@ import { streamText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamToEventIterator } from "@orpc/server";
 import { aiSecuriyMiddleware } from "../middlewares/arcjet/ai";
+import { env } from "@/lib/env";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.LLM_KEY,
+  apiKey: env.LLM_KEY,
 });
 
 const MODEL_ID = "inclusionai/ling-3.0-flash:free";

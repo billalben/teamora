@@ -1,6 +1,7 @@
 import arcjet, { createMiddleware, detectBot } from "@arcjet/next";
 import { withAuth } from "@kinde-oss/kinde-auth-nextjs/server";
 import { NextProxy } from "next/server";
+import { env } from "@/lib/env";
 
 export const config = {
   // matcher tells Next.js which routes to run the middleware on.
@@ -12,7 +13,7 @@ export const config = {
 };
 
 const aj = arcjet({
-  key: process.env.ARCJET_KEY!,
+  key: env.ARCJET_KEY,
   rules: [
     detectBot({
       mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
