@@ -4,6 +4,7 @@ import { HeroBackground } from "@/app/(marketing)/_components/hero-background";
 import { ScreenshotSection } from "@/app/(marketing)/_components/screenshot-section";
 import { FeaturesSection } from "@/app/(marketing)/_components/features-section";
 import { AiSection } from "@/app/(marketing)/_components/ai-section";
+import { RealtimeSection } from "@/app/(marketing)/_components/realtime-section";
 import { CustomersSection } from "@/app/(marketing)/_components/customers-section";
 
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
       </div>
       <FeaturesSection />
       <AiSection />
+      <RealtimeSection />
       <CustomersSection />
     </main>
   );
