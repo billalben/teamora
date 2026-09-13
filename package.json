@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -15,7 +15,8 @@
     "wrangler:dev": "wrangler dev",
     "wrangler:types": "wrangler types",
     "wrangler:deploy": "wrangler deploy",
-    "wrangler:tail": "wrangler tail"
+    "wrangler:tail": "wrangler tail",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.51",
