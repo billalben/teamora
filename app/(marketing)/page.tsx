@@ -8,6 +8,7 @@ import { RealtimeSection } from "@/app/(marketing)/_components/realtime-section"
 import { HowItWorksSection } from "@/app/(marketing)/_components/how-it-works-section";
 import { FaqSection } from "@/app/(marketing)/_components/faq-section";
 import { CustomersSection } from "@/app/(marketing)/_components/customers-section";
+import { Footer } from "@/app/(marketing)/_components/footer";
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
       <HowItWorksSection />
       <FaqSection />
       <CustomersSection />
+      <Footer />
     </main>
   );
 }
