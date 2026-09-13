@@ -12,10 +12,10 @@ import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const menuItems = [
-  { name: "Features", href: "#link" },
-  { name: "Solution", href: "#link" },
-  { name: "Pricing", href: "#link" },
-  { name: "About", href: "#link" },
+  { name: "Features", href: "#features" },
+  { name: "AI", href: "#ai" },
+  { name: "Realtime", href: "#realtime" },
+  { name: "FAQ", href: "#faq" },
 ];
 
 export function HeroHeader() {
@@ -67,6 +67,7 @@ export function HeroHeader() {
                   <li key={index}>
                     <Link
                       href={item.href}
+                      onClick={() => setMenuState(false)}
                       className="text-muted-foreground hover:text-accent-foreground block duration-150"
                     >
                       <span>{item.name}</span>
@@ -83,6 +84,7 @@ export function HeroHeader() {
                     <li key={index}>
                       <Link
                         href={item.href}
+                        onClick={() => setMenuState(false)}
                         className="text-muted-foreground hover:text-accent-foreground block duration-150"
                       >
                         <span>{item.name}</span>
