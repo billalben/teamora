@@ -23,7 +23,7 @@ const transitionVariants = {
 
 export function ScreenshotSection() {
   return (
-    <section>
+    <section id="product">
       <AnimatedGroup
         variants={{
           container: {
