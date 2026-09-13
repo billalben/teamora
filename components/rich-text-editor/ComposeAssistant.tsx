@@ -13,9 +13,10 @@ import { Skeleton } from "../ui/skeleton";
 type ComposeAssistantProps = {
   content: string;
   onAccept?: (text: string) => void;
+  disabled?: boolean;
 };
 
-export function ComposeAssistant({ content, onAccept }: ComposeAssistantProps) {
+export function ComposeAssistant({ content, onAccept, disabled }: ComposeAssistantProps) {
   const [openPopover, setOpenPopover] = useState(false);
 
   const contentRef = useRef(content);
@@ -24,6 +25,10 @@ export function ComposeAssistant({ content, onAccept }: ComposeAssistantProps) {
     id: `compose-assistant`,
     transport: {
       async sendMessages(options) {
+        if (!contentRef.current) {
+          throw new Error("There is nothing to improve");
+        }
+
         return eventIteratorToStream(
           await client.ai.compose.generate({ content: contentRef.current }, { signal: options.abortSignal })
         );
@@ -38,6 +43,10 @@ export function ComposeAssistant({ content, onAccept }: ComposeAssistantProps) {
     setOpenPopover(open);
 
     if (open) {
+      if (disabled) {
+        return;
+      }
+
       const hadAssistantMessage = messages.some((m) => m.role === "assistant");
 
       if (hadAssistantMessage || status !== "ready") {
@@ -68,7 +77,7 @@ export function ComposeAssistant({ content, onAccept }: ComposeAssistantProps) {
     <Popover open={openPopover} onOpenChange={handleOpenPopover}>
       <PopoverTrigger
         render={
-          <Button type="button" size="sm" className="">
+          <Button type="button" size="sm" className="" disabled={disabled}>
             <span className="flex items-center gap-1">
               <SparkleIcon className="size-3.5" />
               <span className="text-xs font-medium">Summarize</span>

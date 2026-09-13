@@ -15,9 +15,7 @@ const openrouter = createOpenRouter({
   apiKey: env.LLM_KEY,
 });
 
-const MODEL_ID = "inclusionai/ling-3.0-flash:free";
-
-const model = openrouter.chat(MODEL_ID);
+const model = openrouter.chat(env.LLM_MODEL);
 
 export const generateThreadSummary = base
   .use(requiredAuthMiddleware)
@@ -193,10 +191,7 @@ remarks.",`,
     const reslut = streamText({
       model,
       system,
-      messages: [
-        { role: "user", content: "Please rewrite and improve the following content:" },
-        { role: "user", content: markdown },
-      ],
+      messages: [{ role: "user", content: `Please rewrite and improve the following content:\n\n${markdown}` }],
       temperature: 0.2,
     });
 

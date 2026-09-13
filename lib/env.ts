@@ -6,6 +6,7 @@ export const env = createEnv({
     DATABASE_URL: z.url(),
     ARCJET_KEY: z.string().min(1),
     LLM_KEY: z.string().min(1),
+    LLM_MODEL: z.string().min(1),
 
     KINDE_CLIENT_ID: z.string().min(1),
     KINDE_CLIENT_SECRET: z.string().min(1),

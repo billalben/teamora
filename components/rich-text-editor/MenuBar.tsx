@@ -198,7 +198,11 @@ export function MenuBar({ editor }: MenuBarProps) {
       <div className="w-px h-6 bg-border mx-2"></div>
 
       <div className="flex flex-wrap gap-1">
-        <ComposeAssistant content={JSON.stringify(editorState?.currentContent)} onAccept={handleAccept} />
+        <ComposeAssistant
+          content={JSON.stringify(editor.getJSON())}
+          onAccept={handleAccept}
+          disabled={editor.isEmpty}
+        />
       </div>
     </div>
   );
