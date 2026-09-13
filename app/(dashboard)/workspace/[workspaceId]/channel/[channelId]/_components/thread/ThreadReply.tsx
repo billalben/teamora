@@ -2,6 +2,8 @@
 
 import { memo, useState } from "react";
 import { SafeContent } from "@/components/rich-text-editor/SafeContent";
+import { AttachmentImage } from "@/components/ui/attachment-image";
+import { getAvatar } from "@/lib/getAvatar";
 import Image from "next/image";
 import { ReactionsBar } from "../reaction/ReactionsBar";
 import { groupReactions } from "../reaction/groupReactions";
@@ -31,7 +33,7 @@ export const ThreadReply = memo(function ThreadReply({ message, selectedThreadId
   return (
     <div className="relative flex gap-3 rounded-lg p-2 group hover:bg-muted/50">
       <Image
-        src={message.authorAvatarUrl ?? ""}
+        src={getAvatar({ email: message.authorEmail, picture: message.authorAvatarUrl })}
         alt={message.authorName}
         width={32}
         height={32}
@@ -59,7 +61,7 @@ export const ThreadReply = memo(function ThreadReply({ message, selectedThreadId
 
             {message.imageUrl && (
               <ImageLightbox src={message.imageUrl} alt={message.content}>
-                <Image
+                <AttachmentImage
                   src={message.imageUrl}
                   alt={message.content}
                   width={512}

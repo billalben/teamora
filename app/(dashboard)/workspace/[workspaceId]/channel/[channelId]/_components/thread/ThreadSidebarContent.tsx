@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { MessageSquareIcon, XIcon } from "lucide-react";
+import { getAvatar } from "@/lib/getAvatar";
 import Image from "next/image";
 import { ThreadReply } from "./ThreadReply";
 import { ThreadReplyForm } from "./ThreadReplyForm";
@@ -60,7 +61,10 @@ export function ThreadSidebarContent() {
           <div className="h-full bg-muted/20 p-4">
             <div className="flex gap-3">
               <Image
-                src={threadData.parent.authorAvatarUrl ?? ""}
+                src={getAvatar({
+                  email: threadData.parent.authorEmail,
+                  picture: threadData.parent.authorAvatarUrl,
+                })}
                 alt={threadData.parent.authorName}
                 width={32}
                 height={32}
