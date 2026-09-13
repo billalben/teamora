@@ -5,6 +5,7 @@ import { ScreenshotSection } from "@/app/(marketing)/_components/screenshot-sect
 import { FeaturesSection } from "@/app/(marketing)/_components/features-section";
 import { AiSection } from "@/app/(marketing)/_components/ai-section";
 import { RealtimeSection } from "@/app/(marketing)/_components/realtime-section";
+import { HowItWorksSection } from "@/app/(marketing)/_components/how-it-works-section";
 import { CustomersSection } from "@/app/(marketing)/_components/customers-section";
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
       <FeaturesSection />
       <AiSection />
       <RealtimeSection />
+      <HowItWorksSection />
       <CustomersSection />
     </main>
   );
