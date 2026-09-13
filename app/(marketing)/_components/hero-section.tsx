@@ -25,7 +25,7 @@ const transitionVariants = {
   },
 };
 
-export default function HeroSection() {
+export function HeroSection() {
   return (
     <>
       <div aria-hidden className="absolute inset-0 isolate hidden opacity-65 contain-strict lg:block">
@@ -106,7 +106,7 @@ export default function HeroSection() {
                 as="h1"
                 className="mx-auto mt-8 max-w-4xl text-balance text-5xl max-md:font-semibold md:text-7xl lg:mt-16 xl:text-[5.25rem]"
               >
-                Modern Solutions for Customer Engagement
+                The AI-ready home for team communication
               </TextEffect>
 
               <TextEffect
@@ -117,8 +117,8 @@ export default function HeroSection() {
                 as="p"
                 className="mx-auto mt-8 max-w-2xl text-balance text-lg"
               >
-                Highly customizable components for building modern websites and applications that look and feel the way
-                you mean it.
+                Teamora organizes conversations into channels with threads, is realtime, and uses AI to keep teams in
+                sync.
               </TextEffect>
 
               <AnimatedGroup
@@ -136,14 +136,14 @@ export default function HeroSection() {
                 className="mt-12 flex flex-col items-center justify-center gap-2 md:flex-row"
               >
                 <div key={1} className="bg-foreground/10 rounded-[calc(var(--radius-xl)+0.125rem)] border p-0.5">
-                  <Button asChild size="lg" className="rounded-xl px-5 text-base">
+                  <Button size="lg" className="rounded-xl px-5 text-base">
                     <Link href="#link">
                       <span className="text-nowrap">Start Building</span>
                     </Link>
                   </Button>
                 </div>
 
-                <Button key={2} asChild size="lg" variant="ghost" className="h-10.5 rounded-xl px-5">
+                <Button key={2} size="lg" variant="ghost" className="h-10.5 rounded-xl px-5">
                   <Link href="#link">
                     <span className="text-nowrap">Request a demo</span>
                   </Link>

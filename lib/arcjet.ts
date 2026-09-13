@@ -1,0 +1,19 @@
+import arcjet, { detectBot, shield, slidingWindow } from "@arcjet/next";
+import { env } from "@/lib/env";
+
+// Re-export the rules to simplify imports inside handlers
+// export { detectBot, fixedWindow, protectSignup, sensitiveInfo, shield, slidingWindow };
+export { detectBot, shield, slidingWindow };
+
+// Create a base Arcjet instance for use by each handler
+export const aj = arcjet({
+  // Get your site key from https://app.arcjet.com
+  // and set it as an environment variable rather than hard coding.
+  // See: https://nextjs.org/docs/app/building-your-application/configuring/environment-variables
+  key: env.ARCJET_KEY,
+  characteristics: ["userId"],
+  rules: [
+    // You can include one or more rules base rules. We don't include any here
+    // so they can be set on each sub-page for the demo.
+  ],
+});

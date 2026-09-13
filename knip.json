@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "tags": ["-lintignore"],
+  "entry": ["components/ui/**/*.{ts,tsx}", "hooks/**/*.{ts,tsx}"],
+  "ignoreDependencies": ["@prisma/client", "pg", "@types/pg"]
+}

@@ -1,11 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import React from "react";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+
+import { RegisterLink, LoginLink, LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const menuItems = [
   { name: "Features", href: "#link" },
@@ -14,11 +18,14 @@ const menuItems = [
   { name: "About", href: "#link" },
 ];
 
-export const HeroHeader = () => {
-  const [menuState, setMenuState] = React.useState(false);
-  const [isScrolled, setIsScrolled] = React.useState(false);
+export function HeroHeader() {
+  const [menuState, setMenuState] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  React.useEffect(() => {
+  const { getUser, isLoading } = useKindeBrowserClient();
+  const user = getUser();
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
@@ -84,27 +91,57 @@ export const HeroHeader = () => {
                   ))}
                 </ul>
               </div>
-              <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <Button asChild variant="outline" size="sm" className={cn(isScrolled && "lg:hidden")}>
-                  <Link href="#">
-                    <span>Login</span>
-                  </Link>
-                </Button>
-                <Button asChild size="sm" className={cn(isScrolled && "lg:hidden")}>
-                  <Link href="#">
-                    <span>Sign Up</span>
-                  </Link>
-                </Button>
-                <Button asChild size="sm" className={cn(isScrolled ? "lg:inline-flex" : "hidden")}>
-                  <Link href="#">
-                    <span>Get Started</span>
-                  </Link>
-                </Button>
-              </div>
+              {isLoading ? (
+                <>
+                  <Skeleton className="h-8 w-20 rounded-md" />
+                  <Skeleton className="h-8 w-20 rounded-md" />
+                </>
+              ) : (
+                <div className="flex w-full flex-col space-y-2 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
+                  {user ? (
+                    <>
+                      <Link href="/workspace" className={buttonVariants({ size: "sm" })}>
+                        Dashboard
+                      </Link>
+
+                      <LogoutLink
+                        className={buttonVariants({
+                          variant: "outline",
+                          size: "sm",
+                          className: cn(isScrolled && "lg:hidden"),
+                        })}
+                      >
+                        Log out
+                      </LogoutLink>
+                    </>
+                  ) : (
+                    <>
+                      <LoginLink className={buttonVariants({ size: "sm", className: cn(isScrolled && "lg:hidden") })}>
+                        Log in
+                      </LoginLink>
+
+                      <RegisterLink
+                        className={buttonVariants({
+                          variant: "outline",
+                          size: "sm",
+                          className: cn(isScrolled ? "lg:inline-flex" : "hidden"),
+                        })}
+                        authUrlParams={{
+                          is_create_org: "true",
+                          org_name: "teamora",
+                          pricing_table_key: "organization_plans",
+                        }}
+                      >
+                        Get Started
+                      </RegisterLink>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </nav>
     </header>
   );
-};
+}
