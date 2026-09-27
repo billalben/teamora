@@ -40,14 +40,29 @@ async function resolveUserWorkspaces({
   userId: string;
   fallbackOrgs: { code: string; name?: string | null }[];
 }): Promise<WorkspaceSummary[]> {
+  const nameByCode = new Map(fallbackOrgs.map((org) => [org.code, org.name]));
+
   try {
     init();
 
-    const { users } = await Users.getUsers({ userId, expand: "organizations" });
+    const [{ users }, organizationsResponse] = await Promise.all([
+      Users.getUsers({ userId, expand: "organizations" }),
+      Organizations.getOrganizations(),
+    ]);
+
     const organizations = users?.[0]?.organizations;
 
+    // The users endpoint only returns organization codes, so pull the names
+    // from the organizations list to keep them in sync (including orgs the
+    // user joined before their token was refreshed).
+    for (const organization of organizationsResponse.organizations ?? []) {
+      if (organization.code) {
+        nameByCode.set(organization.code, organization.name);
+      }
+    }
+
     if (organizations?.length) {
-      return organizations.map((code) => toWorkspace(code));
+      return organizations.map((code) => toWorkspace(code, nameByCode.get(code)));
     }
   } catch (error) {
     console.error("[listWorkspaces] failed to load organizations from the management API", error);
