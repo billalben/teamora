@@ -1,38 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
-import { User } from "@/app/schemas/realtime";
-import { usePresence } from "@/hooks/use-presence";
 import { orpc } from "@/lib/orpc";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
+import { useWorkspaceRealtime } from "@/providers/WorkspaceRealtimeProvider";
 
 export function WorkspaceMembersList() {
   const {
     data: { members },
   } = useSuspenseQuery(orpc.channel.list.queryOptions());
 
-  const { data: workspaceData } = useQuery(orpc.workspace.list.queryOptions());
-
-  const currentUser = workspaceData?.user
-    ? ({
-        id: workspaceData.user.id,
-        email: workspaceData.user.email,
-        full_name: workspaceData.user.given_name,
-        picture: workspaceData.user.picture,
-      } satisfies User)
-    : null;
-
-  const params = useParams();
-
-  const workspaceId = params.workspaceId;
-
-  const { onlineUsers } = usePresence({
-    room: `workspace-${workspaceId}`,
-    currentUser: currentUser,
-  });
+  const { onlineUsers } = useWorkspaceRealtime();
 
   const onlineUsersIds = useMemo(() => {
     return new Set(onlineUsers.map((user) => user.id));

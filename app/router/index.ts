@@ -10,7 +10,7 @@ import {
   toggleMessageReaction,
 } from "./message";
 import { deleteUpload } from "./attachment";
-import { inviteMember, listMembers } from "./member";
+import { inviteMember, leaveWorkspace, listActivity, listMembers, removeMember } from "./member";
 import { generateCompose, generateThreadSummary } from "./ai";
 
 export const router = {
@@ -20,6 +20,9 @@ export const router = {
     member: {
       list: listMembers,
       invite: inviteMember,
+      remove: removeMember,
+      leave: leaveWorkspace,
+      activity: listActivity,
     },
   },
   channel: {

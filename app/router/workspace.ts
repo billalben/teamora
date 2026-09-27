@@ -5,9 +5,56 @@ import { base } from "@/app/middlewares/base";
 import { requiredAuthMiddleware } from "../middlewares/auth";
 import { workspaceSchema } from "../schemas/workspace";
 import { getDefaultOrgCode } from "@/lib/default-org";
-import { init, Organizations } from "@kinde/management-api-js";
+import { init, Organizations, Users } from "@kinde/management-api-js";
 import { standardSecurityMiddleware } from "../middlewares/arcjet/standard";
 import { heavyWriteSecurityMiddleware } from "../middlewares/arcjet/heavy-write";
+
+type WorkspaceSummary = { id: string; name: string; avatar?: string };
+
+function toWorkspace(code: string, name?: string | null): WorkspaceSummary {
+  const resolvedName = name?.trim() || "Unnamed Workspace";
+
+  return {
+    id: code,
+    name: resolvedName,
+    avatar: resolvedName.charAt(0).toUpperCase(),
+  };
+}
+
+function sortWorkspaces(workspaces: WorkspaceSummary[]) {
+  return workspaces.sort(
+    (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) || a.id.localeCompare(b.id)
+  );
+}
+
+/**
+ * Resolve the user's organizations. Membership is read live from the Kinde
+ * Management API so a workspace someone was just added to shows up without
+ * having to log out and back in (token claims are only re-minted on login).
+ * Falls back to the ID-token claims if the API call fails.
+ */
+async function resolveUserWorkspaces({
+  userId,
+  fallbackOrgs,
+}: {
+  userId: string;
+  fallbackOrgs: { code: string; name?: string | null }[];
+}): Promise<WorkspaceSummary[]> {
+  try {
+    init();
+
+    const { users } = await Users.getUsers({ userId, expand: "organizations" });
+    const organizations = users?.[0]?.organizations;
+
+    if (organizations?.length) {
+      return organizations.map((code) => toWorkspace(code));
+    }
+  } catch (error) {
+    console.error("[listWorkspaces] failed to load organizations from the management API", error);
+  }
+
+  return fallbackOrgs.map((org) => toWorkspace(org.code, org.name));
+}
 
 export const listWorkspaces = base
   .use(requiredAuthMiddleware)
@@ -45,20 +92,27 @@ export const listWorkspaces = base
       throw errors.FORBIDDEN();
     }
 
+    const resolved = await resolveUserWorkspaces({
+      userId: context.user.id,
+      fallbackOrgs: organizations.orgs,
+    });
+
+    // Keep a stable, predictable order across workspace switches.
+    // The Kinde default organization is intentionally hidden.
+    const workspaces = sortWorkspaces(resolved.filter((workspace) => workspace.id !== defaultOrgCode));
+
+    const activeOrgCode = organization?.orgCode;
+    // The active org may not be among the memberships yet (e.g. still settling
+    // after a switch), so only surface it when it is actually listed.
+    const currentWorkspace =
+      organization && activeOrgCode !== defaultOrgCode && workspaces.some((workspace) => workspace.id === activeOrgCode)
+        ? organization
+        : null;
+
     return {
-      // Keep a stable, predictable order across workspace switches.
-      // The Kinde default organization is intentionally hidden.
-      workspaces: [...organizations.orgs]
-        .filter((org) => org.code !== defaultOrgCode)
-        .map((org) => ({
-          id: org.code,
-          name: org.name ?? "Unnamed Workspace",
-          avatar: org.name?.charAt(0).toUpperCase() ?? "U",
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) || a.id.localeCompare(b.id)),
+      workspaces,
       user: context.user,
-      // May be null while the active organization is still settling (e.g. right after a switch).
-      currentWorkspace: organization && organization.orgCode !== defaultOrgCode ? organization : null,
+      currentWorkspace,
     };
   });
 

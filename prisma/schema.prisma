@@ -56,6 +56,33 @@ model Message {
   @@index([channelId])
 }
 
+model WorkspaceActivity {
+  id String @id @default(uuid())
+
+  // MEMBER_JOINED | MEMBER_LEFT | MEMBER_REMOVED
+  type String
+
+  // Kinde org id
+  workspaceId String
+
+  // Who performed the action. Null when the action has no actor (e.g. the
+  // user left on their own, or the change was made by the system).
+  actorId        String?
+  actorEmail     String?
+  actorName      String?
+  actorAvatarUrl String?
+
+  // Who the action was about.
+  targetId        String
+  targetEmail     String?
+  targetName      String?
+  targetAvatarUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+}
+
 model MessageReaction {
   id String @id @default(uuid())
 

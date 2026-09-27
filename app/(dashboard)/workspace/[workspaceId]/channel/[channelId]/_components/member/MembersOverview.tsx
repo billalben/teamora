@@ -3,15 +3,34 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { orpc } from "@/lib/orpc";
-import { useQuery } from "@tanstack/react-query";
+import { getWorkspaceDepartureHref } from "@/lib/workspace";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MemberItem } from "./MemberItem";
+import { MemberActivityFeed } from "./MemberActivityFeed";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useParams } from "next/navigation";
-import { usePresence } from "@/hooks/use-presence";
-import { User } from "@/app/schemas/realtime";
+import { useWorkspaceRealtime } from "@/providers/WorkspaceRealtimeProvider";
+import { organization_user } from "@kinde/management-api-js";
+import { isWorkspaceAdmin } from "@/app/schemas/member";
+import { toast } from "sonner";
+
+type PendingAction = {
+  type: "remove" | "leave";
+  member: organization_user;
+};
 
 export function MembersOverview() {
   const [searchMember, setSearchMember] = useState("");
@@ -19,6 +38,12 @@ export function MembersOverview() {
   const trimLowercaseMemberSearch = debouncedMemberSearch.trim().toLowerCase();
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+
+  const queryClient = useQueryClient();
+  const { onlineUsers, sendEvent } = useWorkspaceRealtime();
+  const params = useParams();
+  const workspaceId = String(params.workspaceId);
 
   const handlePopoverOpen = (open: boolean) => {
     setSearchMember("");
@@ -26,6 +51,60 @@ export function MembersOverview() {
   };
 
   const { data: members, isError } = useQuery(orpc.workspace.member.list.queryOptions());
+  const { data: activities } = useQuery(orpc.workspace.member.activity.queryOptions({ input: {} }));
+  const { data: workspaceData } = useQuery(orpc.workspace.list.queryOptions());
+
+  const currentUserId = workspaceData?.user?.id ?? null;
+  const currentMember = members?.find((member) => member.id === currentUserId);
+  const isCurrentUserAdmin = isWorkspaceAdmin(currentMember?.roles);
+  const adminCount = members?.filter((member) => isWorkspaceAdmin(member.roles)).length ?? 0;
+  const isLastAdmin = isCurrentUserAdmin && adminCount <= 1;
+
+  const invalidateMemberQueries = () => {
+    queryClient.invalidateQueries({ queryKey: orpc.workspace.member.list.queryKey() });
+    queryClient.invalidateQueries({ queryKey: orpc.channel.list.queryKey() });
+    queryClient.invalidateQueries({ queryKey: orpc.workspace.member.activity.queryKey({ input: {} }) });
+  };
+
+  const removeMutation = useMutation(
+    orpc.workspace.member.remove.mutationOptions({
+      onSuccess: (_data, variables) => {
+        setPendingAction(null);
+        toast.success("Member removed from the workspace.");
+        sendEvent({ type: "member:removed", payload: { userId: variables.userId } });
+        invalidateMemberQueries();
+      },
+      onError: (error) => {
+        setPendingAction(null);
+        toast.error(error.message);
+      },
+    })
+  );
+
+  const leaveMutation = useMutation(
+    orpc.workspace.member.leave.mutationOptions({
+      onSuccess: () => {
+        setPendingAction(null);
+        toast.success("You left the workspace.");
+
+        if (currentUserId) {
+          sendEvent({ type: "member:left", payload: { userId: currentUserId } });
+        }
+
+        invalidateMemberQueries();
+
+        const remainingOrgCodes = (workspaceData?.workspaces ?? []).map((workspace) => workspace.id);
+
+        window.location.assign(getWorkspaceDepartureHref({ leftOrgCode: workspaceId, remainingOrgCodes }));
+      },
+      onError: (error) => {
+        setPendingAction(null);
+        toast.error(error.message);
+      },
+    })
+  );
+
+  const isActionPending = removeMutation.isPending || leaveMutation.isPending;
 
   const filteredMembers = trimLowercaseMemberSearch
     ? members?.filter((member) => {
@@ -36,77 +115,124 @@ export function MembersOverview() {
       })
     : members;
 
-  const { data: workspaceData } = useQuery(orpc.workspace.list.queryOptions());
-
-  const currentUser = workspaceData?.user
-    ? ({
-        id: workspaceData.user.id,
-        email: workspaceData.user.email,
-        full_name: workspaceData.user.given_name,
-        picture: workspaceData.user.picture,
-      } satisfies User)
-    : null;
-
-  const params = useParams();
-
-  const workspaceId = params.workspaceId;
-
-  const { onlineUsers } = usePresence({
-    room: `workspace-${workspaceId}`,
-    currentUser: currentUser,
-  });
-
   const onlineUsersIds = useMemo(() => {
     return new Set(onlineUsers.map((user) => user.id));
   }, [onlineUsers]);
+
+  const handleConfirmAction = () => {
+    if (!pendingAction) {
+      return;
+    }
+
+    if (pendingAction.type === "remove") {
+      removeMutation.mutate({ userId: pendingAction.member.id ?? "" });
+    } else {
+      leaveMutation.mutate();
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open && !isActionPending) {
+      setPendingAction(null);
+    }
+  };
+
+  const isLeaving = pendingAction?.type === "leave";
+  const targetName = pendingAction?.member.full_name ?? pendingAction?.member.email ?? "this person";
 
   if (isError) {
     return <p>error</p>;
   }
 
   return (
-    <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpen}>
-      <PopoverTrigger
-        render={
-          <Button variant="outline">
-            <UsersIcon />
-            <span>Members</span>
-          </Button>
-        }
-      />
+    <>
+      <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpen}>
+        <PopoverTrigger
+          render={
+            <Button variant="outline">
+              <UsersIcon />
+              <span>Members</span>
+            </Button>
+          }
+        />
 
-      <PopoverContent align="end" className="p-0 w-xs">
-        <div className="p-0">
-          {/* header */}
-          <div className="px-4 py-2 border-b">
-            <h3 className="font-semibold text-sm">Workspace members</h3>
-            <p className="text-xs text-muted-foreground">Members</p>
-          </div>
+        <PopoverContent align="end" className="p-0 w-xs">
+          <div className="p-0">
+            {/* header */}
+            <div className="px-4 py-2 border-b">
+              <h3 className="font-semibold text-sm">Workspace members</h3>
+              <p className="text-xs text-muted-foreground">Members</p>
+            </div>
 
-          {/* search */}
-          <div className="p-3 border-b">
-            <div className="relative">
-              <SearchIcon className="size-4 absolute left-3 top-0 translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-9 h-8"
-                placeholder="Search members..."
-                onChange={(event) => setSearchMember(event.target.value)}
-              />
+            {/* search */}
+            <div className="p-3 border-b">
+              <div className="relative">
+                <SearchIcon className="size-4 absolute left-3 top-0 translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-9 h-8"
+                  placeholder="Search members..."
+                  onChange={(event) => setSearchMember(event.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Members */}
+            <div className="max-h-80 overflow-y-auto">
+              {filteredMembers?.map((member) => {
+                const memberIsAdmin = isWorkspaceAdmin(member.roles);
+                const isSelf = member.id === currentUserId;
+                const canRemove = isCurrentUserAdmin && !isSelf && !(memberIsAdmin && adminCount <= 1);
+                const canLeave = isSelf && !isLastAdmin;
+
+                return (
+                  <MemberItem
+                    key={member.id}
+                    member={member}
+                    isOnline={member?.id ? onlineUsersIds.has(member.id) : false}
+                    canRemove={canRemove}
+                    canLeave={canLeave}
+                    onRemove={(target) => setPendingAction({ type: "remove", member: target })}
+                    onLeave={(target) => setPendingAction({ type: "leave", member: target })}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Activity */}
+            <div className="border-t">
+              <div className="px-4 py-2">
+                <h3 className="font-semibold text-sm">Recent activity</h3>
+              </div>
+
+              <MemberActivityFeed activities={activities ?? []} />
             </div>
           </div>
+        </PopoverContent>
+      </Popover>
 
-          {/* Members */}
-          <div className="max-h-80 overflow-y-auto">
-            {filteredMembers?.map((member) => (
-              <MemberItem
-                key={member.id}
-                member={member}
-                isOnline={member?.id ? onlineUsersIds.has(member.id) : false}
-              />
-            ))}
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+      <AlertDialog open={pendingAction !== null} onOpenChange={handleDialogOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isLeaving ? "Leave workspace?" : "Remove member?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isLeaving
+                ? "You will lose access to this workspace and its channels. You can only rejoin if someone invites you again."
+                : `${targetName} will lose access to this workspace and its channels.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isActionPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              disabled={isActionPending}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {isActionPending ? "Working..." : isLeaving ? "Leave workspace" : "Remove member"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

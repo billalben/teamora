@@ -87,6 +87,19 @@ export const RealtimeEventSchema = z.union([
       messageReactions: z.array(ReactionSchema),
     }),
   }),
+  // Workspace-scoped membership changes (sent to the `workspace-${id}` room).
+  z.object({
+    type: z.literal("member:joined"),
+    payload: z.object({ userId: z.string() }),
+  }),
+  z.object({
+    type: z.literal("member:left"),
+    payload: z.object({ userId: z.string() }),
+  }),
+  z.object({
+    type: z.literal("member:removed"),
+    payload: z.object({ userId: z.string() }),
+  }),
 ]);
 
 export type RealtimeEvent = z.infer<typeof RealtimeEventSchema>;
