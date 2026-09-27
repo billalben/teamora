@@ -9,7 +9,7 @@ function buildHeavyWriteAj() {
       slidingWindow({
         mode: "LIVE",
         interval: "1m",
-        max: 2,
+        max: 8,
       })
     )
     .withRule(

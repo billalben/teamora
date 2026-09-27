@@ -10,7 +10,7 @@ function buildAiAj() {
       slidingWindow({
         mode: "LIVE",
         interval: "1m",
-        max: 3,
+        max: 6,
       })
     )
     .withRule(

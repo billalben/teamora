@@ -8,7 +8,7 @@ function buildWriteAj() {
     slidingWindow({
       mode: "LIVE",
       interval: "1m",
-      max: 40,
+      max: 50,
     })
   );
 }
