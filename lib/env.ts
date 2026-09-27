@@ -17,6 +17,8 @@ export const env = createEnv({
     KINDE_DOMAIN: z.url(),
     KINDE_MANAGEMENT_CLIENT_ID: z.string().min(1),
     KINDE_MANAGEMENT_CLIENT_SECRET: z.string().min(1),
+    // Optional: code of the Kinde default organization. When omitted it is resolved via the Management API.
+    KINDE_DEFAULT_ORG_CODE: z.string().optional(),
 
     UPLOADTHING_TOKEN: z.string().min(1),
   },

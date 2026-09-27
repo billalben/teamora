@@ -67,14 +67,7 @@ export function Footer() {
               </Link>
             ) : (
               <>
-                <RegisterLink
-                  className={linkClass}
-                  authUrlParams={{
-                    is_create_org: "true",
-                    org_name: "teamora",
-                    pricing_table_key: "organization_plans",
-                  }}
-                >
+                <RegisterLink className={linkClass} authUrlParams={{ is_create_org: "true" }}>
                   Get started
                 </RegisterLink>
                 <LoginLink className={linkClass}>Log in</LoginLink>

@@ -3,8 +3,8 @@ import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { z } from "zod";
 import { base } from "@/app/middlewares/base";
 import { requiredAuthMiddleware } from "../middlewares/auth";
-import { requiredWorspaceMiddleware } from "../middlewares/workspace";
 import { workspaceSchema } from "../schemas/workspace";
+import { getDefaultOrgCode } from "@/lib/default-org";
 import { init, Organizations } from "@kinde/management-api-js";
 import { standardSecurityMiddleware } from "../middlewares/arcjet/standard";
 import { heavyWriteSecurityMiddleware } from "../middlewares/arcjet/heavy-write";
@@ -35,7 +35,11 @@ export const listWorkspaces = base
   .handler(async ({ context, errors }) => {
     const { getUserOrganizations, getOrganization } = getKindeServerSession();
 
-    const [organizations, organization] = await Promise.all([getUserOrganizations(), getOrganization()]);
+    const [organizations, organization, defaultOrgCode] = await Promise.all([
+      getUserOrganizations(),
+      getOrganization(),
+      getDefaultOrgCode(),
+    ]);
 
     if (!organizations) {
       throw errors.FORBIDDEN();
@@ -43,7 +47,9 @@ export const listWorkspaces = base
 
     return {
       // Keep a stable, predictable order across workspace switches.
+      // The Kinde default organization is intentionally hidden.
       workspaces: [...organizations.orgs]
+        .filter((org) => org.code !== defaultOrgCode)
         .map((org) => ({
           id: org.code,
           name: org.name ?? "Unnamed Workspace",
@@ -52,13 +58,12 @@ export const listWorkspaces = base
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }) || a.id.localeCompare(b.id)),
       user: context.user,
       // May be null while the active organization is still settling (e.g. right after a switch).
-      currentWorkspace: organization ?? null,
+      currentWorkspace: organization && organization.orgCode !== defaultOrgCode ? organization : null,
     };
   });
 
 export const createWorkspaces = base
   .use(requiredAuthMiddleware)
-  .use(requiredWorspaceMiddleware)
   .use(standardSecurityMiddleware)
   .use(heavyWriteSecurityMiddleware)
   .route({
@@ -84,6 +89,8 @@ export const createWorkspaces = base
       data = await Organizations.createOrganization({
         requestBody: {
           name: input.name,
+          // Do not let anyone auto-join this workspace by supplying its org_code.
+          is_allow_registrations: false,
         },
       });
     } catch {
@@ -109,10 +116,6 @@ export const createWorkspaces = base
     } catch {
       throw errors.FORBIDDEN();
     }
-
-    const { refreshTokens } = getKindeServerSession();
-
-    await refreshTokens();
 
     return {
       orgCode: data.organization.code,

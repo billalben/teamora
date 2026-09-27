@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { orpc } from "@/lib/orpc";
 import { cn } from "@/lib/utils";
+import { getWorkspaceSwitchHref } from "@/lib/workspace";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2Icon } from "lucide-react";
 
@@ -105,13 +106,4 @@ export function WorkspaceList({ orientation = "vertical" }: { orientation?: "ver
       )}
     </>
   );
-}
-
-function getWorkspaceSwitchHref(orgCode: string) {
-  const params = new URLSearchParams({
-    org_code: orgCode,
-    post_login_redirect_url: `/workspace/${orgCode}`,
-  });
-
-  return `/api/auth/login?${params.toString()}`;
 }

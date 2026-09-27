@@ -54,11 +54,7 @@ export function HeroActions() {
         <div key="register" className="bg-foreground/10 rounded-[calc(var(--radius-xl)+0.125rem)] border p-0.5">
           <RegisterLink
             className={buttonVariants({ size: "lg", className: "rounded-xl px-5 text-base" })}
-            authUrlParams={{
-              is_create_org: "true",
-              org_name: "teamora",
-              pricing_table_key: "organization_plans",
-            }}
+            authUrlParams={{ is_create_org: "true" }}
           >
             <span className="text-nowrap">Get started</span>
           </RegisterLink>

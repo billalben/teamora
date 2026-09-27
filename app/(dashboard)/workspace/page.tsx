@@ -1,14 +1,15 @@
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getDefaultOrgCode } from "@/lib/default-org";
 import { Building2Icon } from "lucide-react";
 import { redirect } from "next/navigation";
 import { CreateWorkspace } from "./_components/CreateWorkspace";
 
 export default async function WorkspacePage() {
   const { getOrganization } = getKindeServerSession();
-  const org = await getOrganization();
+  const [org, defaultOrgCode] = await Promise.all([getOrganization(), getDefaultOrgCode()]);
 
-  if (org?.orgCode) {
+  if (org?.orgCode && org.orgCode !== defaultOrgCode) {
     redirect(`/workspace/${org.orgCode}`);
   }
 
