@@ -116,9 +116,8 @@ export function MembersOverview() {
       <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpen}>
         <PopoverTrigger
           render={
-            <Button variant="outline">
-              <UsersIcon />
-              <span>Members</span>
+            <Button variant="ghost" size="icon" className="size-8" aria-label="Workspace members">
+              <UsersIcon className="size-4" />
             </Button>
           }
         />

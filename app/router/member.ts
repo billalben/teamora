@@ -138,28 +138,6 @@ export const inviteMember = base
 
     const invitedEmail = user.email ?? input.email;
 
-    // Grant access to the selected channels (must belong to this workspace).
-    const requestedChannelIds = input.channelIds ?? [];
-
-    if (requestedChannelIds.length > 0) {
-      try {
-        const workspaceChannels = await prisma.channel.findMany({
-          where: {
-            id: { in: requestedChannelIds },
-            workspaceId: context.workspace.orgCode,
-          },
-          select: { id: true },
-        });
-
-        await prisma.channelMember.createMany({
-          data: workspaceChannels.map((channel) => ({ channelId: channel.id, userId: user.id! })),
-          skipDuplicates: true,
-        });
-      } catch (error) {
-        console.error("[inviteMember] failed to grant channel access", error);
-      }
-    }
-
     try {
       await prisma.workspaceActivity.create({
         data: {

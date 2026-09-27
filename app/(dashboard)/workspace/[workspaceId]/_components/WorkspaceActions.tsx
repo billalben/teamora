@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { LogOutIcon, MoreHorizontalIcon } from "lucide-react";
+import { LogOutIcon, MoreHorizontalIcon, UserPlusIcon } from "lucide-react";
 
 import {
   AlertDialog,
@@ -19,6 +19,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { orpc } from "@/lib/orpc";
@@ -28,7 +29,9 @@ import { useWorkspaceRealtime } from "@/providers/WorkspaceRealtimeProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export function LeaveWorkspace() {
+import { InviteMember } from "./member/InviteMember";
+
+export function WorkspaceActions() {
   const [open, setOpen] = useState(false);
   const params = useParams<{ workspaceId: string }>();
   const workspaceId = params.workspaceId;
@@ -40,8 +43,9 @@ export function LeaveWorkspace() {
 
   const currentUserId = workspaceData?.user?.id ?? null;
   const currentMember = members?.find((member) => member.id === currentUserId);
+  const isAdmin = isWorkspaceAdmin(currentMember?.roles);
   const adminCount = members?.filter((member) => isWorkspaceAdmin(member.roles)).length ?? 0;
-  const isLastAdmin = isWorkspaceAdmin(currentMember?.roles) && adminCount <= 1;
+  const isLastAdmin = isAdmin && adminCount <= 1;
 
   const remainingOrgCodes = useMemo(
     () => (workspaceData?.workspaces ?? []).map((workspace) => workspace.id),
@@ -90,6 +94,19 @@ export function LeaveWorkspace() {
         />
 
         <DropdownMenuContent align="end" className="w-52">
+          {isAdmin && (
+            <InviteMember
+              trigger={
+                <DropdownMenuItem closeOnClick>
+                  <UserPlusIcon />
+                  Add member
+                </DropdownMenuItem>
+              }
+            />
+          )}
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem variant="destructive" closeOnClick disabled={isLastAdmin} onClick={() => setOpen(true)}>
             <LogOutIcon />
             Leave workspace

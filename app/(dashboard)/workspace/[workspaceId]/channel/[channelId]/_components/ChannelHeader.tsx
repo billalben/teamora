@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { useThread } from "@/providers/ThreadProvider";
 import { ChannelsTrigger } from "../../../_components/ChannelsTrigger";
+import { useParams } from "next/navigation";
 
-import { InviteMember } from "./member/InviteMember";
-import { MembersOverview } from "./member/MembersOverview";
 import { ChannelMenu } from "./channel/ChannelMenu";
+import { AddChannelMembers } from "./channel/AddChannelMembers";
 
 type ChannelHeaderProps = {
   channelName?: string;
@@ -19,6 +19,7 @@ type ChannelHeaderProps = {
 
 export function ChannelHeader({ channelName = "super cool channel", isAdmin, isMember }: ChannelHeaderProps) {
   const { selectedThreadId, isThreadOpen, toggleThread } = useThread();
+  const params = useParams<{ channelId: string }>();
 
   return (
     <div className="flex h-14 items-center justify-between gap-2 border-b px-4">
@@ -40,12 +41,12 @@ export function ChannelHeader({ channelName = "super cool channel", isAdmin, isM
           </Button>
         )}
 
+        {isAdmin && params.channelId && <AddChannelMembers channelId={params.channelId} />}
+
         {channelName && isAdmin !== undefined && isMember !== undefined && (
           <ChannelMenu channelName={channelName} isAdmin={isAdmin} isMember={isMember} />
         )}
 
-        <MembersOverview />
-        {isAdmin && <InviteMember />}
         <ThemeToggle />
       </div>
     </div>
