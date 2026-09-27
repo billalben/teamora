@@ -9,12 +9,15 @@ import { ChannelsTrigger } from "../../../_components/ChannelsTrigger";
 
 import { InviteMember } from "./member/InviteMember";
 import { MembersOverview } from "./member/MembersOverview";
+import { ChannelMenu } from "./channel/ChannelMenu";
 
 type ChannelHeaderProps = {
   channelName?: string;
+  isAdmin?: boolean;
+  isMember?: boolean;
 };
 
-export function ChannelHeader({ channelName = "super cool channel" }: ChannelHeaderProps) {
+export function ChannelHeader({ channelName = "super cool channel", isAdmin, isMember }: ChannelHeaderProps) {
   const { selectedThreadId, isThreadOpen, toggleThread } = useThread();
 
   return (
@@ -37,8 +40,12 @@ export function ChannelHeader({ channelName = "super cool channel" }: ChannelHea
           </Button>
         )}
 
+        {channelName && isAdmin !== undefined && isMember !== undefined && (
+          <ChannelMenu channelName={channelName} isAdmin={isAdmin} isMember={isMember} />
+        )}
+
         <MembersOverview />
-        <InviteMember />
+        {isAdmin && <InviteMember />}
         <ThemeToggle />
       </div>
     </div>

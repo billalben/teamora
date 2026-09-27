@@ -31,3 +31,36 @@ export const channelNameSchema = z.object({
 });
 
 export type ChannelNameSchemaType = z.infer<typeof channelNameSchema>;
+
+export const updateChannelSchema = channelNameSchema.extend({
+  channelId: z.string().min(1),
+});
+
+export type UpdateChannelSchemaType = z.infer<typeof updateChannelSchema>;
+
+export const channelIdSchema = z.object({
+  channelId: z.string().min(1),
+});
+
+export type ChannelIdSchemaType = z.infer<typeof channelIdSchema>;
+
+export const addChannelMemberSchema = z.object({
+  channelId: z.string().min(1),
+  userId: z.string().min(1),
+});
+
+export type AddChannelMemberSchemaType = z.infer<typeof addChannelMemberSchema>;
+
+export const removeChannelMemberSchema = z.object({
+  channelId: z.string().min(1),
+  userId: z.string().min(1),
+});
+
+export type RemoveChannelMemberSchemaType = z.infer<typeof removeChannelMemberSchema>;
+
+export const updateChannelMembersSchema = z.object({
+  channelId: z.string().min(1),
+  userIds: z.array(z.string().min(1)),
+});
+
+export type UpdateChannelMembersSchemaType = z.infer<typeof updateChannelMembersSchema>;

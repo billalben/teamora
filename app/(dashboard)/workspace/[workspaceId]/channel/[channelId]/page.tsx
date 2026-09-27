@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { usePanelRef, type PanelSize } from "react-resizable-panels";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { useChatLayout } from "@/providers/ChatLayoutProvider";
@@ -23,12 +23,30 @@ function ChannelPageMain({ channelId }: { channelId: string }) {
   const { isThreadOpen } = useThread();
   const { isMobile } = useChatLayout();
   const threadPanelRef = usePanelRef();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const workspaceParams = useParams<{ workspaceId: string }>();
 
   const { data, isError } = useQuery(
     orpc.channel.get.queryOptions({
       input: { channelId },
     })
   );
+
+  // When the user can't access this channel (e.g. an old URL after being
+  // removed), send them to the first channel they can access.
+  React.useEffect(() => {
+    if (!isError) return;
+
+    const list = queryClient.getQueryData<{ channels: { id: string }[] }>(orpc.channel.list.queryKey());
+    const fallback = list?.channels.find((channel) => channel.id !== channelId);
+
+    router.replace(
+      fallback
+        ? `/workspace/${workspaceParams.workspaceId}/channel/${fallback.id}`
+        : `/workspace/${workspaceParams.workspaceId}`
+    );
+  }, [isError, router, queryClient, channelId, workspaceParams.workspaceId]);
 
   const handleThreadResize = React.useCallback(
     (panelSize: PanelSize) => {
@@ -67,7 +85,7 @@ function ChannelPageMain({ channelId }: { channelId: string }) {
 
   const chatColumn = (
     <div className="flex h-full min-h-0 flex-col">
-      <ChannelHeader channelName={data?.channelName} />
+      <ChannelHeader channelName={data?.channelName} isAdmin={data?.isAdmin} isMember={data?.isMember} />
 
       <div className="my-2 mb-4 flex-1 overflow-hidden">
         <MessagesList />

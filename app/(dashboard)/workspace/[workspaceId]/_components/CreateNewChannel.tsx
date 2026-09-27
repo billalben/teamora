@@ -16,11 +16,12 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { isDefinedError } from "@orpc/client";
 import { useParams, useRouter } from "next/navigation";
+import { useWorkspaceRealtime } from "@/providers/WorkspaceRealtimeProvider";
 
 export function CreateNewChannel({ idPrefix = "create-channel" }: { idPrefix?: string }) {
   const queryClient = useQueryClient();
@@ -29,6 +30,9 @@ export function CreateNewChannel({ idPrefix = "create-channel" }: { idPrefix?: s
 
   const router = useRouter();
   const params = useParams<{ workspaceId: string }>();
+  const { sendEvent } = useWorkspaceRealtime();
+
+  const { data: channelList } = useQuery(orpc.channel.list.queryOptions());
 
   const form = useForm<ChannelNameSchemaType>({
     resolver: zodResolver(channelNameSchema),
@@ -39,6 +43,7 @@ export function CreateNewChannel({ idPrefix = "create-channel" }: { idPrefix?: s
     orpc.channel.create.mutationOptions({
       onSuccess: (newChannel) => {
         toast.success(`Channel ${newChannel.name} created successfully`);
+        sendEvent({ type: "channel:created", payload: { channelId: newChannel.id } });
 
         queryClient.invalidateQueries({
           queryKey: orpc.channel.list.queryKey(),
@@ -75,6 +80,11 @@ export function CreateNewChannel({ idPrefix = "create-channel" }: { idPrefix?: s
   const onSubmit = (values: ChannelNameSchemaType) => {
     createChannelMutation.mutate(values);
   };
+
+  // Only workspace admins can create channels.
+  if (channelList && !channelList.isAdmin) {
+    return null;
+  }
 
   return (
     <Dialog open={openDialog} onOpenChange={handleModalChange}>
