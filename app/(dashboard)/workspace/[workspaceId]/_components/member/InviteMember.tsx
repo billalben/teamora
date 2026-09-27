@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2Icon, UserPlusIcon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteMemberSchema, InviteMemberSchemaType } from "@/app/schemas/member";
@@ -20,8 +20,16 @@ import { orpc } from "@/lib/orpc";
 import { toast } from "sonner";
 import { useWorkspaceRealtime } from "@/providers/WorkspaceRealtimeProvider";
 
-export function InviteMember({ trigger }: { trigger?: React.ReactElement } = {}) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+type InviteMemberProps = {
+  trigger?: React.ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+};
+
+export function InviteMember({ trigger, open, onOpenChange }: InviteMemberProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isModalOpen = isControlled ? open : internalOpen;
 
   const queryClient = useQueryClient();
   const { sendEvent } = useWorkspaceRealtime();
@@ -36,7 +44,7 @@ export function InviteMember({ trigger }: { trigger?: React.ReactElement } = {})
       onSuccess: ({ userId }) => {
         toast.success("Member added successfully!");
         form.reset();
-        setIsModalOpen(false);
+        setOpen(false);
 
         sendEvent({ type: "member:joined", payload: { userId } });
 
@@ -50,15 +58,23 @@ export function InviteMember({ trigger }: { trigger?: React.ReactElement } = {})
     })
   );
 
-  const handleOpenChange = (open: boolean) => {
+  const setOpen = (next: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(next);
+    }
+
+    onOpenChange?.(next);
+  };
+
+  const handleOpenChange = (next: boolean) => {
     // Prevent closing while the request is in flight (covers the X button, outside click and Escape).
-    if (!open && inviteMutation.isPending) {
+    if (!next && inviteMutation.isPending) {
       return;
     }
 
-    setIsModalOpen(open);
+    setOpen(next);
 
-    if (!open) {
+    if (!next) {
       form.reset();
     }
   };
@@ -69,16 +85,7 @@ export function InviteMember({ trigger }: { trigger?: React.ReactElement } = {})
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleOpenChange} disablePointerDismissal={inviteMutation.isPending}>
-      <DialogTrigger
-        render={
-          trigger ?? (
-            <Button variant="outline">
-              <UserPlusIcon />
-              Invite Member
-            </Button>
-          )
-        }
-      />
+      {trigger && <DialogTrigger render={trigger} />}
 
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>

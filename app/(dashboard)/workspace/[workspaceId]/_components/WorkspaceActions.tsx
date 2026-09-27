@@ -33,6 +33,7 @@ import { InviteMember } from "./member/InviteMember";
 
 export function WorkspaceActions() {
   const [open, setOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const params = useParams<{ workspaceId: string }>();
   const workspaceId = params.workspaceId;
   const queryClient = useQueryClient();
@@ -95,14 +96,10 @@ export function WorkspaceActions() {
 
         <DropdownMenuContent align="end" className="w-52">
           {isAdmin && (
-            <InviteMember
-              trigger={
-                <DropdownMenuItem closeOnClick>
-                  <UserPlusIcon />
-                  Add member
-                </DropdownMenuItem>
-              }
-            />
+            <DropdownMenuItem closeOnClick onClick={() => setInviteOpen(true)}>
+              <UserPlusIcon />
+              Add member
+            </DropdownMenuItem>
           )}
 
           <DropdownMenuSeparator />
@@ -113,6 +110,8 @@ export function WorkspaceActions() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {isAdmin && <InviteMember open={inviteOpen} onOpenChange={setInviteOpen} />}
 
       <AlertDialog open={open} onOpenChange={handleOpenChange}>
         <AlertDialogContent>
