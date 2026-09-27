@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const inviteMemberSchema = z.object({
   email: z.email("Please enter a valid email address."),
+  channelIds: z.array(z.string().min(1)).optional(),
 });
 
 export type InviteMemberSchemaType = z.infer<typeof inviteMemberSchema>;

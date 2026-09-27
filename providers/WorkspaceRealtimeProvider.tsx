@@ -59,6 +59,10 @@ export function WorkspaceRealtimeProvider({ workspaceId, children }: WorkspaceRe
     queryClient.invalidateQueries({ queryKey: orpc.workspace.member.activity.queryKey({ input: {} }) });
   }, [queryClient]);
 
+  const invalidateChannelQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: orpc.channel.list.queryKey() });
+  }, [queryClient]);
+
   const redirectAfterDeparture = useCallback(() => {
     const cached = queryClient.getQueryData<{ workspaces: { id: string }[] }>(orpc.workspace.list.queryKey());
     const remainingOrgCodes = cached?.workspaces.map((workspace) => workspace.id) ?? [];
@@ -111,6 +115,22 @@ export function WorkspaceRealtimeProvider({ workspaceId, children }: WorkspaceRe
           if (membership.payload.userId === currentUserRef.current?.id) {
             redirectAfterDeparture();
           }
+
+          return;
+        }
+
+        if (
+          membership.type === "channel:created" ||
+          membership.type === "channel:updated" ||
+          membership.type === "channel:deleted"
+        ) {
+          invalidateChannelQueries();
+
+          return;
+        }
+
+        if (membership.type === "channel:access:changed") {
+          invalidateChannelQueries();
         }
       } catch (error) {
         console.error("failed to parse workspace realtime message: ", error);

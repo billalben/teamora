@@ -100,6 +100,23 @@ export const RealtimeEventSchema = z.union([
     type: z.literal("member:removed"),
     payload: z.object({ userId: z.string() }),
   }),
+  // Channel lifecycle and per-channel access changes (workspace room).
+  z.object({
+    type: z.literal("channel:created"),
+    payload: z.object({ channelId: z.string() }),
+  }),
+  z.object({
+    type: z.literal("channel:updated"),
+    payload: z.object({ channelId: z.string() }),
+  }),
+  z.object({
+    type: z.literal("channel:deleted"),
+    payload: z.object({ channelId: z.string() }),
+  }),
+  z.object({
+    type: z.literal("channel:access:changed"),
+    payload: z.object({ channelId: z.string(), userIds: z.array(z.string()) }),
+  }),
 ]);
 
 export type RealtimeEvent = z.infer<typeof RealtimeEventSchema>;

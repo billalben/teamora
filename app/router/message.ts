@@ -16,10 +16,29 @@ import { getUploadThingFileKey } from "@/lib/image";
 import { utapi } from "@/lib/uploadthing-server";
 import { Message } from "@/lib/generated/prisma/client";
 import { readSecurityMiddleware } from "../middlewares/arcjet/read";
+import { findWorkspaceMember, getWorkspaceMembers } from "../middlewares/workspace";
+import { isWorkspaceAdmin } from "../schemas/member";
 
 type MessageReactions = { messageReactions: { emoji: string; userId: string }[] };
 const messageWithReactions = z.custom<Message & MessageReactions & { _count: { replies: number } }>();
 const messageWithReactionsOnly = z.custom<Message & MessageReactions>();
+
+/**
+ * Returns true when the user can access the channel: they are a workspace admin
+ * or an explicit channel member. Every message operation must check this so
+ * private channels can't be read or written by direct RPC calls.
+ */
+async function canAccessChannel(workspaceId: string, channelId: string, userId: string) {
+  const [members, channelMembership] = await Promise.all([
+    getWorkspaceMembers(workspaceId),
+    prisma.channelMember.findUnique({
+      where: { channelId_userId: { channelId, userId } },
+      select: { id: true },
+    }),
+  ]);
+
+  return isWorkspaceAdmin(findWorkspaceMember(members, userId)?.roles) || Boolean(channelMembership);
+}
 
 /**
  * Deleted messages are soft-deleted so the author can undo. Anyone reading a
@@ -58,6 +77,10 @@ export const createMessage = base
 
     if (!channel) {
       throw errors.FORBIDDEN(); // channel not found or doesn't belong to workspace
+    }
+
+    if (!(await canAccessChannel(context.workspace.orgCode, input.channelId, context.user.id))) {
+      throw errors.FORBIDDEN(); // user is not a member of this channel
     }
 
     // if this is a thread reply, validate the parent message
@@ -127,6 +150,10 @@ export const listMessages = base
       throw errors.FORBIDDEN(); // channel not found or doesn't belong to workspace
     }
 
+    if (!(await canAccessChannel(context.workspace.orgCode, input.channelId, context.user.id))) {
+      throw errors.FORBIDDEN(); // user is not a member of this channel
+    }
+
     const messages = await prisma.message.findMany({
       where: {
         channelId: input.channelId,
@@ -174,11 +201,18 @@ export const updateMessage = base
   .handler(async ({ input, context, errors }) => {
     const message = await prisma.message.findUnique({
       where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
-      select: { id: true, authorId: true, imageUrl: true, deletedAt: true },
+      select: { id: true, authorId: true, imageUrl: true, deletedAt: true, channelId: true },
     });
 
     if (!message) {
       throw errors.NOT_FOUND(); // message not found
+    }
+
+    if (
+      !message.channelId ||
+      !(await canAccessChannel(context.workspace.orgCode, message.channelId, context.user.id))
+    ) {
+      throw errors.FORBIDDEN(); // user is not a member of this channel
     }
 
     if (message.authorId !== context.user.id) {
@@ -238,11 +272,18 @@ export const deleteMessage = base
   .handler(async ({ input, context, errors }) => {
     const message = await prisma.message.findUnique({
       where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
-      select: { id: true, authorId: true, imageUrl: true },
+      select: { id: true, authorId: true, imageUrl: true, channelId: true },
     });
 
     if (!message) {
       throw errors.NOT_FOUND(); // message not found
+    }
+
+    if (
+      !message.channelId ||
+      !(await canAccessChannel(context.workspace.orgCode, message.channelId, context.user.id))
+    ) {
+      throw errors.FORBIDDEN(); // user is not a member of this channel
     }
 
     if (message.authorId !== context.user.id) {
@@ -290,11 +331,18 @@ export const restoreMessage = base
   .handler(async ({ input, context, errors }) => {
     const message = await prisma.message.findUnique({
       where: { id: input.messageId, channel: { workspaceId: context.workspace.orgCode } },
-      select: { id: true, authorId: true, deletedAt: true },
+      select: { id: true, authorId: true, deletedAt: true, channelId: true },
     });
 
     if (!message) {
       throw errors.NOT_FOUND(); // message not found
+    }
+
+    if (
+      !message.channelId ||
+      !(await canAccessChannel(context.workspace.orgCode, message.channelId, context.user.id))
+    ) {
+      throw errors.FORBIDDEN(); // user is not a member of this channel
     }
 
     if (message.authorId !== context.user.id) {
@@ -346,6 +394,13 @@ export const listThreadReplies = base
       throw errors.NOT_FOUND(); // parent message not found
     }
 
+    if (
+      !parentRow.channelId ||
+      !(await canAccessChannel(context.workspace.orgCode, parentRow.channelId, context.user.id))
+    ) {
+      throw errors.FORBIDDEN(); // user is not a member of this channel
+    }
+
     const replies = await prisma.message.findMany({
       where: { threadId: input.messageId },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
@@ -386,11 +441,18 @@ export const toggleMessageReaction = base
         id: input.messageId,
         channel: { workspaceId: context.workspace.orgCode },
       },
-      select: { id: true, deletedAt: true },
+      select: { id: true, deletedAt: true, channelId: true },
     });
 
     if (!message) {
       throw errors.NOT_FOUND(); // message not found
+    }
+
+    if (
+      !message.channelId ||
+      !(await canAccessChannel(context.workspace.orgCode, message.channelId, context.user.id))
+    ) {
+      throw errors.FORBIDDEN(); // user is not a member of this channel
     }
 
     if (message.deletedAt) {

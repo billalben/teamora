@@ -22,6 +22,21 @@ import { getAvatar } from "@/lib/getAvatar";
 
 type RemovalFailure = "forbidden" | "notFound" | "unknown";
 
+/** Remove all of a user's per-channel grants for a workspace. */
+async function purgeChannelGrants(workspaceId: string, userId: string) {
+  try {
+    await prisma.channelMember.deleteMany({
+      where: {
+        userId,
+        channel: { workspaceId },
+      },
+    });
+  } catch (error) {
+    // Membership removal already succeeded; grants are best-effort cleanup.
+    console.error("[member] failed to purge channel grants", error);
+  }
+}
+
 /**
  * Remove a user from a Kinde organization. Returns a failure kind instead of
  * throwing so every handler can map it to its own typed error.
@@ -123,6 +138,28 @@ export const inviteMember = base
 
     const invitedEmail = user.email ?? input.email;
 
+    // Grant access to the selected channels (must belong to this workspace).
+    const requestedChannelIds = input.channelIds ?? [];
+
+    if (requestedChannelIds.length > 0) {
+      try {
+        const workspaceChannels = await prisma.channel.findMany({
+          where: {
+            id: { in: requestedChannelIds },
+            workspaceId: context.workspace.orgCode,
+          },
+          select: { id: true },
+        });
+
+        await prisma.channelMember.createMany({
+          data: workspaceChannels.map((channel) => ({ channelId: channel.id, userId: user.id! })),
+          skipDuplicates: true,
+        });
+      } catch (error) {
+        console.error("[inviteMember] failed to grant channel access", error);
+      }
+    }
+
     try {
       await prisma.workspaceActivity.create({
         data: {
@@ -208,6 +245,8 @@ export const removeMember = base
         },
       });
 
+      await purgeChannelGrants(orgCode, input.userId);
+
       return;
     }
 
@@ -246,6 +285,8 @@ export const removeMember = base
         targetAvatarUrl: getAvatar({ email: target.email, picture: target.picture }),
       },
     });
+
+    await purgeChannelGrants(orgCode, input.userId);
   });
 
 export const leaveWorkspace = base
@@ -307,6 +348,8 @@ export const leaveWorkspace = base
         targetAvatarUrl: getAvatar({ email: self.email, picture: self.picture }),
       },
     });
+
+    await purgeChannelGrants(orgCode, self.id);
   });
 
 export const listActivity = base
