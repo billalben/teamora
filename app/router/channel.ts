@@ -160,6 +160,7 @@ export const getChannel = base
   .output(
     z.object({
       channelName: z.string(),
+      createdById: z.string(),
       currentUser: z.custom<KindeUser<Record<string, unknown>>>(),
       isAdmin: z.boolean(),
       isMember: z.boolean(),
@@ -188,6 +189,7 @@ export const getChannel = base
 
     return {
       channelName: channel.name,
+      createdById: channel.createdById,
       currentUser: context.user,
       isAdmin,
       isMember,
@@ -266,7 +268,12 @@ export const listChannelMembers = base
     tags: ["Channel"],
   })
   .input(channelIdSchema)
-  .output(z.array(z.string()))
+  .output(
+    z.object({
+      createdById: z.string(),
+      userIds: z.array(z.string()),
+    })
+  )
   .handler(async ({ context, input, errors }) => {
     const channel = await loadChannel(input.channelId, context.workspace.orgCode);
 
@@ -279,7 +286,10 @@ export const listChannelMembers = base
       select: { userId: true },
     });
 
-    return memberRows.map((row) => row.userId);
+    return {
+      createdById: channel.createdById,
+      userIds: memberRows.map((row) => row.userId),
+    };
   });
 
 export const updateChannelMembers = base
@@ -315,8 +325,14 @@ export const updateChannelMembers = base
     const workspaceUserIds = new Set(members.map((member) => member.id).filter(Boolean));
     const targetUserIds = new Set(input.userIds.filter((userId) => workspaceUserIds.has(userId)));
 
-    // The channel creator always keeps access.
+    // The channel creator and workspace admins always keep access.
     targetUserIds.add(channel.createdById);
+
+    for (const member of members) {
+      if (member.id && isWorkspaceAdmin(member.roles)) {
+        targetUserIds.add(member.id);
+      }
+    }
 
     await prisma.$transaction([
       prisma.channelMember.deleteMany({

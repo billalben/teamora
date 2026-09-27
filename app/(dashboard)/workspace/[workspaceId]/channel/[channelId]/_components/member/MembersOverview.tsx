@@ -14,21 +14,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { orpc } from "@/lib/orpc";
-import { getWorkspaceDepartureHref } from "@/lib/workspace";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MemberItem } from "./MemberItem";
 import { MemberActivityFeed } from "./MemberActivityFeed";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useParams } from "next/navigation";
 import { useWorkspaceRealtime } from "@/providers/WorkspaceRealtimeProvider";
 import { organization_user } from "@kinde/management-api-js";
 import { isWorkspaceAdmin } from "@/app/schemas/member";
 import { toast } from "sonner";
 
 type PendingAction = {
-  type: "remove" | "leave";
+  type: "remove";
   member: organization_user;
 };
 
@@ -42,8 +40,6 @@ export function MembersOverview() {
 
   const queryClient = useQueryClient();
   const { onlineUsers, sendEvent } = useWorkspaceRealtime();
-  const params = useParams();
-  const workspaceId = String(params.workspaceId);
 
   const handlePopoverOpen = (open: boolean) => {
     setSearchMember("");
@@ -58,7 +54,6 @@ export function MembersOverview() {
   const currentMember = members?.find((member) => member.id === currentUserId);
   const isCurrentUserAdmin = isWorkspaceAdmin(currentMember?.roles);
   const adminCount = members?.filter((member) => isWorkspaceAdmin(member.roles)).length ?? 0;
-  const isLastAdmin = isCurrentUserAdmin && adminCount <= 1;
 
   const invalidateMemberQueries = () => {
     queryClient.invalidateQueries({ queryKey: orpc.workspace.member.list.queryKey() });
@@ -81,30 +76,7 @@ export function MembersOverview() {
     })
   );
 
-  const leaveMutation = useMutation(
-    orpc.workspace.member.leave.mutationOptions({
-      onSuccess: () => {
-        setPendingAction(null);
-        toast.success("You left the workspace.");
-
-        if (currentUserId) {
-          sendEvent({ type: "member:left", payload: { userId: currentUserId } });
-        }
-
-        invalidateMemberQueries();
-
-        const remainingOrgCodes = (workspaceData?.workspaces ?? []).map((workspace) => workspace.id);
-
-        window.location.assign(getWorkspaceDepartureHref({ leftOrgCode: workspaceId, remainingOrgCodes }));
-      },
-      onError: (error) => {
-        setPendingAction(null);
-        toast.error(error.message);
-      },
-    })
-  );
-
-  const isActionPending = removeMutation.isPending || leaveMutation.isPending;
+  const isActionPending = removeMutation.isPending;
 
   const filteredMembers = trimLowercaseMemberSearch
     ? members?.filter((member) => {
@@ -124,11 +96,7 @@ export function MembersOverview() {
       return;
     }
 
-    if (pendingAction.type === "remove") {
-      removeMutation.mutate({ userId: pendingAction.member.id ?? "" });
-    } else {
-      leaveMutation.mutate();
-    }
+    removeMutation.mutate({ userId: pendingAction.member.id ?? "" });
   };
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -137,7 +105,6 @@ export function MembersOverview() {
     }
   };
 
-  const isLeaving = pendingAction?.type === "leave";
   const targetName = pendingAction?.member.full_name ?? pendingAction?.member.email ?? "this person";
 
   if (isError) {
@@ -182,7 +149,6 @@ export function MembersOverview() {
                 const memberIsAdmin = isWorkspaceAdmin(member.roles);
                 const isSelf = member.id === currentUserId;
                 const canRemove = isCurrentUserAdmin && !isSelf && !(memberIsAdmin && adminCount <= 1);
-                const canLeave = isSelf && !isLastAdmin;
 
                 return (
                   <MemberItem
@@ -190,9 +156,7 @@ export function MembersOverview() {
                     member={member}
                     isOnline={member?.id ? onlineUsersIds.has(member.id) : false}
                     canRemove={canRemove}
-                    canLeave={canLeave}
                     onRemove={(target) => setPendingAction({ type: "remove", member: target })}
-                    onLeave={(target) => setPendingAction({ type: "leave", member: target })}
                   />
                 );
               })}
@@ -213,11 +177,9 @@ export function MembersOverview() {
       <AlertDialog open={pendingAction !== null} onOpenChange={handleDialogOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{isLeaving ? "Leave workspace?" : "Remove member?"}</AlertDialogTitle>
+            <AlertDialogTitle>Remove member?</AlertDialogTitle>
             <AlertDialogDescription>
-              {isLeaving
-                ? "You will lose access to this workspace and its channels. You can only rejoin if someone invites you again."
-                : `${targetName} will lose access to this workspace and its channels.`}
+              {`${targetName} will lose access to this workspace and its channels.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -228,7 +190,7 @@ export function MembersOverview() {
               disabled={isActionPending}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              {isActionPending ? "Working..." : isLeaving ? "Leave workspace" : "Remove member"}
+              {isActionPending ? "Working..." : "Remove member"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

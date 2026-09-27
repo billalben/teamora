@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, LockIcon, SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,13 +34,14 @@ export function ManageChannelMembers({ channelId, open, onOpenChange }: ManageCh
   const [pendingUserIds, setPendingUserIds] = useState<string[] | null>(null);
 
   const { data: members } = useQuery(orpc.workspace.member.list.queryOptions());
-  const { data: channelMemberIds } = useQuery(
+  const { data: channelMembers } = useQuery(
     orpc.channel.member.list.queryOptions({ input: { channelId }, enabled: open })
   );
 
+  const createdById = channelMembers?.createdById;
   const selectedUserIds = useMemo(
-    () => new Set(pendingUserIds ?? channelMemberIds ?? []),
-    [pendingUserIds, channelMemberIds]
+    () => new Set(pendingUserIds ?? channelMembers?.userIds ?? []),
+    [pendingUserIds, channelMembers]
   );
 
   const updateMutation = useMutation(
@@ -93,7 +94,17 @@ export function ManageChannelMembers({ channelId, open, onOpenChange }: ManageCh
   };
 
   const handleSave = () => {
-    updateMutation.mutate({ channelId, userIds: [...selectedUserIds] });
+    // Admins always have access and the creator is forced server-side, so only
+    // submit toggleable (non-admin, non-creator) members.
+    const userIds = [...selectedUserIds].filter((userId) => {
+      if (userId === createdById) return false;
+
+      const member = (members ?? []).find((candidate) => candidate.id === userId);
+
+      return !isWorkspaceAdmin(member?.roles);
+    });
+
+    updateMutation.mutate({ channelId, userIds });
   };
 
   return (
@@ -117,15 +128,21 @@ export function ManageChannelMembers({ channelId, open, onOpenChange }: ManageCh
         <div className="max-h-72 overflow-y-auto -mx-2 px-2">
           {filtered.map((member) => {
             const userId = member.id ?? "";
-            const selected = selectedUserIds.has(userId);
-            const isAdmin = isWorkspaceAdmin(member.roles);
+            const memberIsAdmin = isWorkspaceAdmin(member.roles);
+            // Admins and the channel creator always keep access, so they can't be toggled.
+            const isLocked = memberIsAdmin || userId === createdById;
+            const selected = isLocked || selectedUserIds.has(userId);
 
             return (
               <button
                 key={userId}
                 type="button"
+                disabled={isLocked}
                 onClick={() => toggleMember(userId)}
-                className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-accent transition-colors"
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors",
+                  isLocked ? "cursor-not-allowed opacity-70" : "hover:bg-accent"
+                )}
               >
                 <UserAvatar className="size-8" picture={member.picture} email={member.email} name={member.full_name} />
 
@@ -134,15 +151,19 @@ export function ManageChannelMembers({ channelId, open, onOpenChange }: ManageCh
                   <p className="truncate text-xs text-muted-foreground">{member.email}</p>
                 </div>
 
-                {isAdmin && <span className="text-[11px] text-muted-foreground">Admin</span>}
+                {isLocked && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {memberIsAdmin ? "Admin" : "Creator"} — always has access
+                  </span>
+                )}
 
                 <span
                   className={cn(
-                    "flex size-5 items-center justify-center rounded border",
+                    "flex size-5 shrink-0 items-center justify-center rounded border",
                     selected ? "border-primary bg-primary text-primary-foreground" : "border-border"
                   )}
                 >
-                  {selected && <CheckIcon className="size-3.5" />}
+                  {isLocked ? <LockIcon className="size-3" /> : selected && <CheckIcon className="size-3.5" />}
                 </span>
               </button>
             );

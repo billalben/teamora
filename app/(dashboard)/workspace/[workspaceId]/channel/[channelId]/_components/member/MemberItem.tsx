@@ -10,20 +10,18 @@ import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 import { isWorkspaceAdmin } from "@/app/schemas/member";
 import { organization_user } from "@kinde/management-api-js";
-import { LogOutIcon, MoreHorizontalIcon, UserMinusIcon } from "lucide-react";
+import { MoreHorizontalIcon, UserMinusIcon } from "lucide-react";
 
 type MemberItemProps = {
   member: organization_user;
   isOnline: boolean;
   canRemove?: boolean;
-  canLeave?: boolean;
   onRemove?: (member: organization_user) => void;
-  onLeave?: (member: organization_user) => void;
 };
 
-export function MemberItem({ member, isOnline, canRemove, canLeave, onRemove, onLeave }: MemberItemProps) {
+export function MemberItem({ member, isOnline, canRemove, onRemove }: MemberItemProps) {
   const isAdmin = isWorkspaceAdmin(member.roles);
-  const hasActions = canRemove || canLeave;
+  const hasActions = canRemove;
 
   return (
     <div className="group flex items-center gap-3 px-3 py-2 hover:bg-accent transition-colors">
@@ -69,13 +67,6 @@ export function MemberItem({ member, isOnline, canRemove, canLeave, onRemove, on
               <DropdownMenuItem variant="destructive" onClick={() => onRemove?.(member)}>
                 <UserMinusIcon />
                 Remove from workspace
-              </DropdownMenuItem>
-            )}
-
-            {canLeave && (
-              <DropdownMenuItem variant="destructive" onClick={() => onLeave?.(member)}>
-                <LogOutIcon />
-                Leave workspace
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
