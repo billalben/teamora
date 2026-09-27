@@ -96,13 +96,15 @@ export function WorkspaceActions() {
 
         <DropdownMenuContent align="end" className="w-52">
           {isAdmin && (
-            <DropdownMenuItem closeOnClick onClick={() => setInviteOpen(true)}>
-              <UserPlusIcon />
-              Add member
-            </DropdownMenuItem>
-          )}
+            <>
+              <DropdownMenuItem closeOnClick onClick={() => setInviteOpen(true)}>
+                <UserPlusIcon />
+                Add member
+              </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
+            </>
+          )}
 
           <DropdownMenuItem variant="destructive" closeOnClick disabled={isLastAdmin} onClick={() => setOpen(true)}>
             <LogOutIcon />

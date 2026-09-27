@@ -9,16 +9,25 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { orpc } from "@/lib/orpc";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs";
 import { PortalLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import { useQuery } from "@tanstack/react-query";
-import { CreditCard, LogOutIcon, UserIcon } from "lucide-react";
+import { Check, CreditCard, LogOutIcon, Moon, Sun, UserIcon } from "lucide-react";
+import { useTheme } from "next-themes";
+
+import { cn } from "@/lib/utils";
+
+const themes = ["light", "dark", "system"] as const;
 
 export function UserNav({ idPrefix = "user-nav" }: { idPrefix?: string }) {
   const { data, isPending } = useQuery(orpc.workspace.list.queryOptions());
+  const { theme, setTheme } = useTheme();
 
   if (isPending || !data) {
     return <div className="size-12 animate-pulse rounded-xl bg-background/50" />;
@@ -68,6 +77,25 @@ export function UserNav({ idPrefix = "user-nav" }: { idPrefix?: string }) {
               </PortalLink>
             }
           />
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Sun className="size-4 dark:hidden" />
+              <Moon className="hidden size-4 dark:block" />
+              Theme
+            </DropdownMenuSubTrigger>
+
+            <DropdownMenuSubContent>
+              {themes.map((value) => (
+                <DropdownMenuItem key={value} closeOnClick onClick={() => setTheme(value)}>
+                  <Check className={cn("size-4", theme === value ? "opacity-100" : "opacity-0")} />
+                  <span className="capitalize">{value}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
 
           <DropdownMenuSeparator />
 

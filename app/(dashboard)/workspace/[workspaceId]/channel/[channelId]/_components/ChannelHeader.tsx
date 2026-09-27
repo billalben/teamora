@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { LogOutIcon, MessageSquareIcon, PencilIcon, TrashIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import ThemeToggle from "@/components/ui/theme-toggle";
 import { useThread } from "@/providers/ThreadProvider";
 import { ChannelsTrigger } from "../../../_components/ChannelsTrigger";
 
@@ -77,8 +76,6 @@ export function ChannelHeader({ channelName = "super cool channel", isAdmin, isM
             <LogOutIcon className="size-4" />
           </Button>
         )}
-
-        <ThemeToggle />
       </div>
 
       {canManageChannel && (
