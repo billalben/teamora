@@ -3,7 +3,11 @@ import { heavyWriteSecurityMiddleware } from "../middlewares/arcjet/heavy-write"
 import { standardSecurityMiddleware } from "../middlewares/arcjet/standard";
 import { requiredAuthMiddleware } from "../middlewares/auth";
 import { base } from "../middlewares/base";
-import { requiredWorspaceMiddleware } from "../middlewares/workspace";
+import {
+  getWorkspaceMembers,
+  requiredWorkspaceAdminMiddleware,
+  requiredWorspaceMiddleware,
+} from "../middlewares/workspace";
 import {
   inviteMemberSchema,
   isWorkspaceAdmin,
@@ -15,15 +19,6 @@ import {
 import { ApiError, init, organization_user, Organizations, Users } from "@kinde/management-api-js";
 import { prisma } from "@/lib/prisma";
 import { getAvatar } from "@/lib/getAvatar";
-
-async function getWorkspaceMembers(orgCode: string) {
-  const { organization_users } = await Organizations.getOrganizationUsers({
-    orgCode,
-    sort: "name_asc",
-  });
-
-  return organization_users ?? [];
-}
 
 type RemovalFailure = "forbidden" | "notFound" | "unknown";
 
@@ -55,7 +50,7 @@ async function removeOrganizationMember(orgCode: string, userId: string): Promis
 
 export const inviteMember = base
   .use(requiredAuthMiddleware)
-  .use(requiredWorspaceMiddleware)
+  .use(requiredWorkspaceAdminMiddleware)
   .use(standardSecurityMiddleware)
   .use(heavyWriteSecurityMiddleware)
   .route({

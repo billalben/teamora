@@ -24,8 +24,23 @@ model Channel {
   createdById String // Kinde user id
 
   messages Message[]
+  members  ChannelMember[]
 
   @@unique([workspaceId, name])
+}
+
+model ChannelMember {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // Foreign keys (Kinde IDs)
+  channelId String
+  userId    String // Kinde user id
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([userId])
 }
 
 model Message {
